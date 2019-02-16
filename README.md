@@ -1,6 +1,6 @@
-# Wypy is a command line utilise to manage network connection.
+# Wypy is a command line utility to manage network connections.
 
-The _base_ list of features include:
+The _base_ list of features will include:
 
 - Scanning the network for access points
 - turn the radio on
@@ -10,8 +10,6 @@ The _base_ list of features include:
 - check if an access point was saved
 - list access points
 - listing devices
-
-# In the future it might support more complex featues like monitoring etc
 
 ## Some litterature
 
