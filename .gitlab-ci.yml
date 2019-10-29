@@ -1,0 +1,25 @@
+image: python:3.7
+
+stages:
+  - tests
+  - deploy
+
+before_script:
+  - pip install twine pipenv
+
+run_tests:
+  stage: tests
+  script:
+    - pipenv install --dev
+    - pipenv run pytest -v -s --disable-warnings
+
+deploy:
+  stage: deploy
+  variables:
+    TWINE_USERNAME: $PYPI_USERNAME
+    TWINE_PASSWORD: $PYPI_PASSWORD
+  script:
+    - python setup.py sdist
+    - twine upload --skip-existing dist/*
+  only:
+    - production
