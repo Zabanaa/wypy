@@ -2,16 +2,22 @@ image: python:3.7
 
 stages:
   - tests
+  - lint
   - deploy
 
 before_script:
   - pip install twine pipenv
+  - pipenv install --dev
 
 run_tests:
   stage: tests
   script:
-    - pipenv install --dev
     - pipenv run pytest -v -s --disable-warnings
+
+lint_code:
+  stage: lint
+  script:
+    - pipenv run flake8 --exclude tests
 
 deploy:
   stage: deploy
