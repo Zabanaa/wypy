@@ -1,5 +1,5 @@
 import click
-
+from wypy.general.commands import general as general_commands
 
 @click.group()
 def cli():
@@ -8,13 +8,8 @@ def cli():
     """
     pass
 
-@click.command()
-def hello():
-    """Print hello to the screen"""
-    click.echo('Hello World')
 
-
-cli.add_command(hello)
+cli.add_command(general_commands)
 
 if __name__ == "__main__":
     cli()
