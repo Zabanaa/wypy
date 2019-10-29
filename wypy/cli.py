@@ -1,6 +1,7 @@
 import click
 from wypy.general.commands import general as general_commands
 
+
 @click.group()
 def cli():
     """
