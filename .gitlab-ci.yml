@@ -6,6 +6,7 @@ stages:
   - deploy
 
 before_script:
+  - apt-get install -y pkg-config
   - pip install twine pipenv
   - pipenv install --dev
 
