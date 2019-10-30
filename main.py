@@ -2,7 +2,7 @@ import dbus
 
 NM_BUS_NAME = 'org.freedesktop.NetworkManager'
 NM_IFACE = 'org.freedesktop.NetworkManager'
-NM_BUS_OBJ = '/org/freedesktop/NetworkManager'
+NM_BUS_OBJ = '/org/freedesktop/NetworkManager/Settings'
 
 # Connect to the system bus
 bus = dbus.SystemBus()
@@ -17,22 +17,13 @@ props = [
 
 nm = bus.get_object(NM_BUS_NAME, NM_BUS_OBJ)
 
+host = nm.Get(
+    NM_BUS_NAME + '.Settings',
+    'Hostname',
+    dbus_interface=dbus.PROPERTIES_IFACE
+)
 
-def get_dbus_object_property(prop_name):
-    # maybe there should be a try/except
-
-    return nm.Get(
-        NM_BUS_NAME,
-        prop_name,
-        dbus_interface=dbus.PROPERTIES_IFACE
-    )
-
-
-state = [get_dbus_object_property(prop) for prop in props]
-# state = nm.state(dbus_interface=NM_IFACE)
-for prop in state:
-    print(prop)
-
+print(host)
 # devices = nm.Get(
 #     NM_BUS_NAME,
 #     'WirelessEnabled',
