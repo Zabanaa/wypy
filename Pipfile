@@ -12,6 +12,7 @@ click = "*"
 colorama = "*"
 dbus-python = "*"
 termcolor = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.7"
