@@ -17,7 +17,8 @@ def status():
 @general.command()
 def hostname():
     """Print hostname"""
-    General.get_hostname()
+    gen = General(NM_BUS_NAME, NM_OBJ_PATH, NM_IFACE)
+    gen.get_hostname()
 
 
 general.add_command(status)

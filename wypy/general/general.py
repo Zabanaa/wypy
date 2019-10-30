@@ -1,5 +1,6 @@
 import click
 from wypy.wypy import WyPy
+from wypy.utils.constants import NM_SETTINGS_OBJ_PATH, NM_SETTINGS_BUS_NAME
 from termcolor import colored
 
 
@@ -25,8 +26,14 @@ class General(WyPy):
             print(f'{name}: {self._translate_status_code(name, status)} \n')
 
     def get_hostname(self):
-        print('running wypy general hostname from class')
+        self.proxy = self.bus.get_object(
+            self.bus_name, NM_SETTINGS_OBJ_PATH
+        )
+        self.bus_name = NM_SETTINGS_BUS_NAME
+        hostname = self.get_object_property('Hostname')
+        click.echo(f'Hostname: {hostname}')
 
+    # private methods
     def _get_status_info(self):
         status = [
             str(self.get_object_property(prop))
