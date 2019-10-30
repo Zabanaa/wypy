@@ -1,1 +1,1 @@
-from .general import General
+from .general import General  # noqa: F401

@@ -14,6 +14,7 @@ def status():
     gen = General(NM_BUS_NAME, NM_OBJ_PATH, NM_IFACE)
     gen.show_status()
 
+
 @general.command()
 def hostname():
     """Print hostname"""
