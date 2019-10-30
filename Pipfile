@@ -10,6 +10,8 @@ pytest = "*"
 [packages]
 click = "*"
 colorama = "*"
+dbus-python = "*"
+termcolor = "*"
 
 [requires]
 python_version = "3.7"
