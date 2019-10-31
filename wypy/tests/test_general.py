@@ -25,8 +25,8 @@ def test_show_status(general):
 
 
 def test_translate_status_code_connectivity(general):
-    """ 
-    Assert General._translate_status_code method returns the 
+    """
+    Assert General._translate_status_code method returns the
     correct string for the CONNECTIVITY property.
     ""[summary]
     """
@@ -49,10 +49,9 @@ def test_translate_status_code_connectivity(general):
 
 
 def test_translate_status_code_wifi(general):
-    """ 
-    Assert General._translate_status_code method returns the 
-    correct string for the CONNECTIVITY property.
-    ""[summary]
+    """
+    Assert General._translate_status_code returns the
+    correct string for the WIFI property.
     """
     prop = 'WIFI'
 
@@ -61,3 +60,60 @@ def test_translate_status_code_wifi(general):
 
     result = general._translate_status_code(prop, 0)
     assert result == colored('disabled', 'red')
+
+
+def test_translate_status_code_state(general):
+    """
+    Assert General._translate_status_code returns the
+    correct string for the STATE property.
+    """
+    prop = 'STATE'
+
+    result = general._translate_status_code(prop, 70)
+    assert result == colored('connected', 'green')
+
+    result = general._translate_status_code(prop, 60)
+    assert result == colored('connected (site)', 'green')
+
+    result = general._translate_status_code(prop, 50)
+    assert result == colored('connected (local)', 'green')
+
+    result = general._translate_status_code(prop, 40)
+    assert result == colored('connecting', 'yellow')
+
+    result = general._translate_status_code(prop, 30)
+    assert result == colored('disconnecting', 'red')
+
+    result = general._translate_status_code(prop, 20)
+    assert result == colored('disconnected', 'red')
+
+    result = general._translate_status_code(prop, 10)
+    assert result == colored('asleep', 'yellow')
+
+    result = general._translate_status_code(prop, 0)
+    assert result == colored('unknown', 'red')
+
+
+def test_get_status_info(general, mocker):
+    """
+    Assert General.get_status_info calls the get_object_property
+    method as many times as there are status_properties,
+    each time passing the correct argument.
+    """
+    calls = [mock.call(prop) for prop in general.status_properties]
+    mock_get_prop = mocker.patch.object(general, 'get_object_property')
+    general._get_status_info()
+    mock_get_prop.assert_has_calls(calls, any_order=True)
+
+
+def test_get_hostname(general, mocker):
+    """
+    Assert General.get_hostname calls the get_object_property method
+    with 'Hostname' as the argument.
+    """
+    mock_hostname = 'some hostname'
+    mock_get_prop = mocker.patch.object(general, 'get_object_property', return_value=mock_hostname)
+    mock_click_echo = mocker.patch('click.echo')
+    general.get_hostname()
+    mock_get_prop.assert_called_once_with('Hostname')
+    mock_click_echo.assert_called_once_with(f'Hostname: {mock_hostname}')
