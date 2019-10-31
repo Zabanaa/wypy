@@ -1,5 +1,6 @@
 import click
 from wypy.general.commands import general as general_commands
+from wypy.networking.commands import network as network_commands
 from wypy.utils.constants import VERSION
 
 
@@ -13,6 +14,7 @@ def cli():
 
 
 cli.add_command(general_commands)
+cli.add_command(network_commands)
 
 if __name__ == "__main__":
     cli()
