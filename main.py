@@ -9,34 +9,28 @@ bus = dbus.SystemBus()
 
 # get the network manager object (proxy)
 
-props = [
-    'State', 'WirelessEnabled',
-    'WirelessHardwareEnabled', 'WwanEnabled',
-    'WwanHardwareEnabled'
-]
+# props = [
+#     'State', 'WirelessEnabled',
+#     'WirelessHardwareEnabled', 'WwanEnabled',
+#     'WwanHardwareEnabled'
+# ]
 
-nm = bus.get_object(NM_BUS_NAME, NM_BUS_OBJ)
+# nm = bus.get_object(NM_BUS_NAME, NM_BUS_OBJ)
 
-host = nm.Get(
-    NM_BUS_NAME + '.Settings',
-    'Hostname',
-    dbus_interface=dbus.PROPERTIES_IFACE
-)
-
-print(host)
-# devices = nm.Get(
-#     NM_BUS_NAME,
-#     'WirelessEnabled',
+# host = nm.Get(
+#     NM_BUS_NAME + '.Settings',
+#     'Hostname',
 #     dbus_interface=dbus.PROPERTIES_IFACE
 # )
 
-# print(devices)
+# print(host)
 
-# for device in devices:
-#     dev = bus.get_object(NM_BUS_NAME, device)
-#     dev_name = dev.Get(
-#         NM_BUS_NAME + '.Device',
-#         'Interface',
-#         dbus_interface=dbus.PROPERTIES_IFACE
-#     )
-#     print(dev_name)
+proxy = bus.get_object(NM_BUS_NAME, '/' + NM_IFACE.replace('.', '/'))
+nm = dbus.Interface(proxy, NM_IFACE)
+devices = nm.GetDevices()
+
+for device in devices:
+    proxy = bus.get_object(NM_BUS_NAME, device)
+    dev_iface = dbus.Interface(proxy, dbus.PROPERTIES_IFACE)
+    device_props = dev_iface.GetAll('org.freedesktop.NetworkManager.Device')
+    print(device_props['Udi'], device_props['Interface'])
