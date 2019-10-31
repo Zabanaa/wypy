@@ -30,6 +30,7 @@ nm = dbus.Interface(proxy, NM_IFACE)
 devices = nm.GetDevices()
 
 for device in devices:
+    print(device)
     proxy = bus.get_object(NM_BUS_NAME, device)
     dev_iface = dbus.Interface(proxy, dbus.PROPERTIES_IFACE)
     device_props = dev_iface.GetAll('org.freedesktop.NetworkManager.Device')
