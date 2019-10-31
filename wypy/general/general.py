@@ -6,8 +6,8 @@ from termcolor import colored
 
 class General(WyPy):
 
-    def __init__(self, bus_name, obj_path, iface):
-        super().__init__(bus_name, obj_path, iface)
+    def __init__(self, obj_path):
+        super().__init__(obj_path)
         self.status_properties = [
             'State', 'Connectivity', 'WirelessEnabled',
             'WirelessHardwareEnabled', 'WwanEnabled',

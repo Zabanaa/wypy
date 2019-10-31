@@ -1,6 +1,6 @@
 import click
 from .general import General
-from wypy.utils.constants import NM_BUS_NAME, NM_IFACE, NM_OBJ_PATH
+from wypy.utils.constants import NM_BUS_NAME, NM_OBJ_PATH
 
 
 @click.group('general')
@@ -11,14 +11,14 @@ def general():
 @general.command()
 def status():
     """Print general NetworkManager status"""
-    gen = General(NM_BUS_NAME, NM_OBJ_PATH, NM_IFACE)
+    gen = General(NM_OBJ_PATH)
     gen.show_status()
 
 
 @general.command()
 def hostname():
     """Print hostname"""
-    gen = General(NM_BUS_NAME, NM_OBJ_PATH, NM_IFACE)
+    gen = General(NM_OBJ_PATH)
     gen.get_hostname()
 
 

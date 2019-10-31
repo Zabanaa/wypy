@@ -1,4 +1,5 @@
 import click
+from .networking import Network
 
 
 @click.group('network')
@@ -10,6 +11,8 @@ def network():
 def turn_on():
     """Turn networking capabiliy on"""
     click.echo('turn networking on')
+    network = Network('/hello')
+    network.get_connectivity_state()
 
 
 @click.command('off')
