@@ -1,13 +1,16 @@
 import click
 from wypy.wypy import WyPy
-from wypy.utils.constants import NM_SETTINGS_OBJ_PATH, NM_SETTINGS_BUS_NAME
-from termcolor import colored
+from wypy.utils.constants import (
+    NM_SETTINGS_OBJ_PATH,
+    NM_SETTINGS_BUS_NAME,
+    NM_OBJ_PATH
+)
 
 
 class General(WyPy):
 
-    def __init__(self, obj_path):
-        super().__init__(obj_path)
+    def __init__(self):
+        super().__init__()
         self.status_properties = [
             'State', 'Connectivity', 'WirelessEnabled',
             'WirelessHardwareEnabled', 'WwanEnabled',
@@ -26,67 +29,16 @@ class General(WyPy):
             print(f'{name}: {self._translate_status_code(name, int(status))} \n')  # noqa: E501
 
     def get_hostname(self):
-        self.proxy = self.bus.get_object(
-            self.bus_name, NM_SETTINGS_OBJ_PATH
-        )
+        proxy = self.bus.get_object(self.bus_name, NM_SETTINGS_OBJ_PATH)
         self.bus_name = NM_SETTINGS_BUS_NAME
-        hostname = self.get_object_property('Hostname')
+        hostname = self.get_object_property(proxy=proxy, prop_name='Hostname')
         click.echo(f'Hostname: {hostname}')
 
     # private methods
     def _get_status_info(self):
+        proxy = self.bus.get_object(self.bus_name, NM_OBJ_PATH)
         status = [
-            str(self.get_object_property(prop))
+            str(self.get_object_property(proxy=proxy, prop_name=prop))
             for prop in self.status_properties
         ]
         return status
-
-    def _translate_status_code(self, prop, code):
-
-        if prop == 'CONNECTIVITY':
-
-            if code == 0:
-                return colored('unknown', 'red')
-
-            if code == 1:
-                return colored('none', 'red')
-
-            if code == 2:
-                return colored('portal', 'yellow')
-
-            if code == 3:
-                return colored('limited', 'green')
-
-            if code == 4:
-                return colored('full', 'green')
-
-        if prop == 'STATE':
-            if code == 0:
-                return colored('unknown', 'red')
-
-            if code == 10:
-                return colored('asleep', 'yellow')
-
-            if code == 20:
-                return colored('disconnected', 'red')
-
-            if code == 30:
-                return colored('disconnecting', 'red')
-
-            if code == 40:
-                return colored('connecting', 'yellow')
-
-            if code == 50:
-                return colored('connected (local)', 'green')
-
-            if code == 60:
-                return colored('connected (site)', 'green')
-
-            if code == 70:
-                return colored('connected', 'green')
-
-        if prop in ['WIFI', 'WIFI-HW', 'WWAN', 'WWAN-HW']:
-            if code == 1:
-                return colored('enabled', 'green')
-            if code == 0:
-                return colored('disabled', 'red')
