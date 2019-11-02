@@ -5,14 +5,14 @@ from termcolor import colored
 
 class WyPy(object):
 
-    def __init__(self, bus_name=NM_BUS_NAME):
+    def __init__(self):
         self.bus = dbus.SystemBus()
-        self.bus_name = bus_name
+        self.bus_name = NM_BUS_NAME
 
     def get_object_property(
         self,
-        proxy,
-        prop_name,
+        proxy=None,
+        prop_name=None,
         iface=dbus.PROPERTIES_IFACE
     ):
         return proxy.Get(
@@ -70,7 +70,7 @@ class WyPy(object):
             if code == 70:
                 return colored('connected', 'green')
 
-        if prop in ['WIFI', 'WIFI-HW', 'WWAN', 'WWAN-HW']:
+        if prop in ['NETWORKING', 'WIFI', 'WIFI-HW', 'WWAN', 'WWAN-HW']:
             if code == 1:
                 return colored('enabled', 'green')
             if code == 0:

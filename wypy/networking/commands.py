@@ -10,15 +10,17 @@ def network():
 @click.command('on')
 def turn_on():
     """Turn networking capabiliy on"""
-    click.echo('turn networking on')
-    network = Network('/hello')
-    network.get_connectivity_state()
+    click.echo('Enabling networking capability')
+    network = Network()
+    network.turn_on()
 
 
 @click.command('off')
 def turn_off():
     """Turn networking capabiliy off"""
-    click.echo('set all managed devices to unmanaged')
+    click.echo('Disabling networking capability')
+    network = Network()
+    network = network.turn_off()
 
 
 @click.command('connectivity')
@@ -30,7 +32,8 @@ def connectivity(check):
     Get connectivity state.
     If check is passed, WyPy will perform a check on NetworkManager
     """
-    click.echo('check connectivity heheh')
+    network = Network()
+    network.get_connectivity_state()
 
 
 network.add_command(turn_on)
