@@ -56,9 +56,6 @@ class TestNetworking(dbusmock.DBusTestCase):
         self.p_mock.terminate()
         self.p_mock.wait()
 
-    def test_disable_networking(self):
-        self.network.turn_off()
-        self.assertRegex(self.p_mock.stdout.readline(), b'^[0-9.]+ Enable$')
 
 # def test_networking_turn_on(network):
 #     """
