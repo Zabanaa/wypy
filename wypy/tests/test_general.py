@@ -1,5 +1,11 @@
 from unittest import mock
+from unittest.mock import call
 from dbus.proxies import ProxyObject
+from wypy.utils.constants import (
+    DBUS_GENERAL_PROPS,
+    NM_OBJ_PATH,
+    NM_IFACE
+)
 
 
 def test_show_status(general, mocker):
@@ -8,24 +14,30 @@ def test_show_status(general, mocker):
     the following private methods:
 
         _get_status_info
-        _translate_status_code
+        translate_status_code
 
     Both of which are being mocked.
-    This test also asserts that _translate_status_code was called 6 times.
+    This test also asserts that translate_status_code was called 6 times.
     """
 
-    props = general.property_names
-    statuses = [70, 4, 1, 1, 1, 1]
-    calls = [mock.call(name, status) for name, status in zip(props, statuses)]
+    prop_names = DBUS_GENERAL_PROPS.values()
+    status_codes = [70, 4, 1, 1, 1, 1]
+    calls = [
+        call(name, status)
+        for name, status in zip(prop_names, status_codes)
+    ]
+    info = [
+        {'name': name, 'status_code': status}
+        for name, status in zip(prop_names, status_codes)
+    ]
 
-    mock_gen = mocker.patch.object(general, '_get_status_info', return_value=statuses)
-    mock_translate = mocker.patch.object(general, '_translate_status_code')
+    mock_info = mocker.patch.object(general, '_get_status_info', return_value=info)
+    mock_translate = mocker.patch.object(general, 'translate_status_code')
 
     general.show_status()
 
+    mock_info.assert_called_once()
     mock_translate.assert_has_calls(calls, any_order=True)
-    mock_gen.assert_called_once()
-
 
 def test_get_status_info(general, mocker):
     """
@@ -33,14 +45,14 @@ def test_get_status_info(general, mocker):
     method as many times as there are status_properties,
     each time passing the correct argument.
     """
-    mock_get_prop = mocker.patch.object(general, 'get_object_property')
+    mock_get_prop = mocker.patch.object(general, 'get_all_properties')
 
     general._get_status_info()
 
-    proxy_arg = mock_get_prop.call_args[1]['proxy']
+    expected_call = call(iface_name=NM_IFACE, object_path=NM_OBJ_PATH)
 
-    assert mock_get_prop.called == True  # noqa E712
-    assert isinstance(proxy_arg, ProxyObject)
+    assert mock_get_prop.call_args == expected_call
+
 
 
 def test_get_hostname(general, mocker):

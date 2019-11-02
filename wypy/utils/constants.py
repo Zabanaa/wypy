@@ -9,3 +9,12 @@ NM_SETTINGS_IFACE = 'org.freedesktop.NetworkManager.Settings'
 NM_IFACE = 'org.freedesktop.NetworkManager'
 
 NM_DEVICE_IFACE = 'org.freedesktop.NetworkManager.Device'
+
+DBUS_GENERAL_PROPS = {
+    'Connectivity': 'CONNECTIVITY',
+    'State': 'STATE',
+    'WirelessEnabled': 'WIFI',
+    'WwanEnabled': 'WWAN',
+    'WirelessHardwareEnabled': 'WIFI-HW',
+    'WwanHardwareEnabled': 'WWAN-HW'
+}

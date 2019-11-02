@@ -26,7 +26,7 @@ class WyPy(object):
         iface = dbus.Interface(proxy, dbus.PROPERTIES_IFACE)
         return iface.GetAll(iface_name)
 
-    def _translate_status_code(self, prop, code):
+    def translate_status_code(self, prop, code):
 
         if prop == 'CONNECTIVITY':
 
