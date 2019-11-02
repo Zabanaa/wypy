@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fa17c3ce90526134bce1c5e4fde74550807c0cb16180627cd28809d1e55c1d9f"
+            "sha256": "4712133ad38e1ac36074da3edd4f77c318ba0f6dc8f99907dfa5705a30652c18"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -110,6 +110,13 @@
             ],
             "index": "pypi",
             "version": "==1.11.2"
+        },
+        "python-dbusmock": {
+            "hashes": [
+                "sha256:994a178268b6d74aeb158c0f155cd141e9a0cfae14226a764cd022c4949fe242"
+            ],
+            "index": "pypi",
+            "version": "==0.18.3"
         },
         "six": {
             "hashes": [

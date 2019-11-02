@@ -13,6 +13,7 @@ colorama = "*"
 dbus-python = "*"
 termcolor = "*"
 pytest-mock = "*"
+python-dbusmock = "*"
 
 [requires]
 python_version = "3.7"
