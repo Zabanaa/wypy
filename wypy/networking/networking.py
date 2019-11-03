@@ -34,14 +34,14 @@ class Network(WyPy):
         if not networking_enabled:
             self._enable_networking()
         else:
-            click.echo('its already enabled fam wyd ?')
+            click.echo('Networking is already enabled. Skipping.')
 
     def turn_off(self):
         networking_enabled = self._get_networking_status()
         if networking_enabled:
             self._disable_networking()
         else:
-            click.echo('Its already disabled are you taking the piss ?')
+            click.echo('Networking is already disabled. Skipping.')
 
     # private methods
     def _enable_networking(self):
