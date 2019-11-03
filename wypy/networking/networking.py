@@ -5,7 +5,6 @@ from wypy.utils.constants import (
     DBUS_GENERAL_PROPS,
     NM_IFACE,
     NM_OBJ_PATH,
-    NM_DEVICE_IFACE,
     NM_BUS_NAME
 )
 
