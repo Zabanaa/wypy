@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from wypy.wypy import WyPy
 from wypy.networking import Network
 from wypy.utils.constants import NM_OBJ_PATH, NM_IFACE, NM_BUS_NAME
@@ -6,29 +7,6 @@ from dbus.proxies import ProxyObject
 import subprocess
 import dbus
 import dbusmock
-
-
-def test_get_connectivity_state(network, mocker):
-    """
-    Assert that Network.get_connectivity_state does the following:
-        - calls self.bus.get_object_property
-        - calls click.echo with the correct string
-    """
-    state = 4
-    mock_get_prop = mocker.patch.object(WyPy, 'get_object_property', return_value=state)    
-    mock_click_echo = mocker.patch('click.echo')
-    expected_msg = f'Connectivity State: { colored("full", "green") }'
-
-    network.get_connectivity_state()
-
-    mock_prop_name = mock_get_prop.call_args[1]['prop_name']
-    mock_proxy_obj = mock_get_prop.call_args[1]['proxy']
-
-    mock_click_echo.assert_called_once()
-    mock_click_echo.assert_called_once_with(expected_msg)
-
-    assert mock_prop_name == 'Connectivity'
-    assert isinstance(mock_proxy_obj, ProxyObject)
 
 
 class TestNetworking(dbusmock.DBusTestCase):
@@ -56,53 +34,86 @@ class TestNetworking(dbusmock.DBusTestCase):
         self.p_mock.terminate()
         self.p_mock.wait()
 
+    @patch.object(WyPy, 'get_object_property', return_value=4)
+    @patch('click.echo')
+    def test_get_connectivity_state(self, echo_mock, wypy_mock):
+        """
+        Assert that Network.get_connectivity_state does the following:
+            - calls self.bus.get_object_property
+            - calls click.echo with the correct string
+        """
+        expected_msg = f'Connectivity State: { colored("full", "green") }'
 
-# def test_networking_turn_on(network):
-#     """
-#         - assert Network.get_networking_status was called
-#         - assert Network._enable_networking was called 
-#     """
-#     pass
+        self.network.get_connectivity_state()
 
+        mock_prop_name = wypy_mock.call_args[1]['prop_name']
+        mock_proxy_obj = wypy_mock.call_args[1]['proxy']
 
-# def test_networking_turn_on_error(network):
-#     """
-#         - assert Network.get_networking_status was called (return 1)
-#         - assert click.echo was called with the message
-#     """
-#     pass
+        echo_mock.assert_called_once()
+        echo_mock.assert_called_once_with(expected_msg)
 
+        assert mock_prop_name == 'Connectivity'
+        assert isinstance(mock_proxy_obj, ProxyObject)
 
-# def test_networking_turn_off(network):
-#     """
-#         - assert Network.get_networking_status was called
-#         - assert Network._disable_networking was called
-#     """
-#     pass
+    @patch.object(Network, '_get_networking_status', return_value=0)
+    @patch.object(Network, '_enable_networking')
+    def test_networking_turn_on(self, get_status_mock, enable_network_mock):
+        """
+            - assert Network.get_networking_status was called
+            - assert Network._enable_networking was called
+        """
+        self.network.turn_on()
+        get_status_mock.assert_called_once()
+        enable_network_mock.assert_called_once()
 
+    @patch.object(Network, '_get_networking_status', return_value=1)
+    @patch('click.echo')
+    def test_networking_turn_on_error(self, echo_mock, get_status_mock):
+        """
+            This test case ensures that an error message is printed
+            to the user when they attempt to enable networking and
+            it's already on.
 
-# def test_networking_turn_off_error(network):
-#     """
-#         - assert Network.get_networking_status was called (return 0)
-#         - assert click.echo was called with the message
-#     """
-#     pass
+            - assert Network.get_networking_status was called
+            - assert click.echo was called with the expected error message
+        """
+        expected_msg = 'Networking is already enabled. Skipping.'
+        self.network.turn_on()
+        get_status_mock.assert_called_once()
+        echo_mock.assert_called_once_with(expected_msg)
 
+    @patch.object(Network, '_get_networking_status', return_value=1)
+    @patch.object(Network, '_disable_networking')
+    def test_networking_turn_off(self, get_status_mock, disable_network_mock):
+        """
+            - assert Network.get_networking_status was called
+            - assert Network._disable_networking was called
+        """
+        self.network.turn_off()
+        get_status_mock.assert_called_once()
+        disable_network_mock.assert_called_once()
 
-# def test_get_networking_status(network):
-#     """
-#         - assert WyPy.get_object_property was called with 'NetworkingEnabled'
-#         passed as an argument along with self.proxy
-#     """
-#     pass
+    @patch.object(Network, '_get_networking_status', return_value=0)
+    @patch('click.echo')
+    def test_networking_turn_off_error(self, echo_mock, get_status_mock):
+        """
+            - assert Network.get_networking_status was called (return 0)
+            - assert click.echo was called with the message
+        """
+        expected_msg = 'Networking is already disabled. Skipping.'
+        self.network.turn_off()
+        get_status_mock.assert_called_once()
+        echo_mock.assert_called_once_with(expected_msg)
 
-
-# # these two tests require that dbus be mocked
-# def test_enable_networking(network):
-#     pass
-#     # network.turn_off()
-#     # print(network_manager.stdout.readline())
-
-
-# def test_disable_networking(network):
-#     pass
+    @patch.object(Network, 'get_object_property')
+    def test_get_networking_status(self, get_prop_mock):
+        """
+            - assert WyPy.get_object_property was called with
+            'NetworkingEnabled' passed as an argument along
+            with self.proxy
+        """
+        self.network._get_networking_status()
+        get_prop_mock.assert_called_once_with(
+            prop_name='NetworkingEnabled',
+            proxy=self.network.proxy
+        )
