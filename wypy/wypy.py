@@ -9,6 +9,20 @@ class WyPy(object):
         self.bus = dbus.SystemBus()
         self.bus_name = NM_BUS_NAME
 
+    def set_object_property(
+        self,
+        proxy=None,
+        prop_name=None,
+        value=None,
+        iface=dbus.PROPERTIES_IFACE
+    ):
+        return proxy.Set(
+            self.bus_name,
+            prop_name,
+            value,
+            dbus_interface=iface
+        )
+
     def get_object_property(
         self,
         proxy=None,
