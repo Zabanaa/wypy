@@ -11,26 +11,26 @@ class WiFi(WyPy):
         self.wifi_prop = 'WirelessEnabled'
 
     def turn_on(self):
-        click.echo('Turning WiFi on ...')
+        click.echo('Enabling WiFi ...')
         wifi_enabled = self._get_wifi_status_code()
         if not wifi_enabled:
             self._enable_wifi()
         else:
-            click.echo('Wifi is already enabled. Skipping.')
+            click.echo('WiFi is already enabled. Skipping.')
 
     def turn_off(self):
-        click.echo('turning wifi off')
+        click.echo('Disabling WiFi ...')
         wifi_enabled = self._get_wifi_status_code()
         if wifi_enabled:
             self._disable_wifi()
         else:
-            click.echo('Wifi is already disabled. Skipping')
+            click.echo('WiFi is already disabled. Skipping.')
 
     def print_status(self):
         status_code = self._get_wifi_status_code()
         prop = DBUS_GENERAL_PROPS[self.wifi_prop]
         status = self.translate_status_code(prop, status_code)
-        click.echo(f'Wifi is {status}')
+        click.echo(f'WiFi is {status}')
 
     def _enable_wifi(self):
         self.set_object_property(
