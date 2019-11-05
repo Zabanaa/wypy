@@ -9,18 +9,21 @@ def wifi():
 
 @click.command('on')
 def turn_wifi_on():
+    """Enable WiFi"""
     wifi = WiFi()
     wifi.turn_on()
 
 
 @click.command('off')
 def turn_wifi_off():
+    """Disable WiFi"""
     wifi = WiFi()
     wifi.turn_off()
 
 
 @click.command('status')
 def wifi_status():
+    """Print current WiFi status"""
     wifi = WiFi()
     wifi.print_status()
 
