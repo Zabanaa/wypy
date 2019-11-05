@@ -2,6 +2,7 @@ import click
 from wypy.general.commands import general as general_commands
 from wypy.networking.commands import network as network_commands
 from wypy.wifi.commands import wifi as wifi_commands
+from wypy.connection.commands import connection as conn_commands
 from wypy.utils.constants import VERSION
 
 
@@ -17,6 +18,7 @@ def cli():
 cli.add_command(general_commands)
 cli.add_command(network_commands)
 cli.add_command(wifi_commands)
+cli.add_command(conn_commands)
 
 if __name__ == "__main__":
     cli()
