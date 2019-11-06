@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 flake8 = "*"
 pytest = "*"
+autopep8 = "*"
 
 [packages]
 click = "*"
@@ -16,6 +17,8 @@ pytest-mock = "*"
 python-dbusmock = "*"
 vext = "*"
 vext-gi = "*"
+prettytable = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.7"
