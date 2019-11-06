@@ -12,6 +12,8 @@ NM_DEVICE_IFACE = 'org.freedesktop.NetworkManager.Device'
 
 NM_ACTIVE_CONN_IFACE = 'org.freedesktop.NetworkManager.Connection.Active'
 
+NM_CONNECTION_IFACE = 'org.freedesktop.NetworkManager.Settings.Connection'
+
 DBUS_GENERAL_PROPS = {
     'Connectivity': 'CONNECTIVITY',
     'State': 'STATE',
