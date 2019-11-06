@@ -20,6 +20,7 @@ class Connection(WyPy):
         self.proxy = self.bus.get_object(NM_BUS_NAME, NM_OBJ_PATH)
         self.active_conns_prop = 'ActiveConnections'
         self.conn_props = ['Id', 'Uuid', 'Type', 'Devices']
+        self.table = PrettyTable(['Name', 'UUID', 'TYPE', 'DEVICE'])
 
     def activate(self):
         click.echo('Activating connection ...')
@@ -74,7 +75,6 @@ class Connection(WyPy):
         return (device_props['Interface'], int(device_props['DeviceType']))
 
     def _print_conns(self, data):
-        table = PrettyTable(['Name', 'UUID', 'TYPE', 'DEVICE'])
         for row in data:
-            table.add_row(row)
-        print(table)
+            self.table.add_row(row)
+        click.echo(self.table)
