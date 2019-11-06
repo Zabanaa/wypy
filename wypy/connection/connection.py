@@ -1,3 +1,5 @@
+from prettytable import PrettyTable
+from termcolor import colored
 from wypy.utils.constants import (
     NM_BUS_NAME,
     NM_OBJ_PATH,
@@ -35,8 +37,12 @@ class Connection(WyPy):
     def show_active(self):
         click.echo('Showing active connections ...')
         conns = self._get_active_connections()
-        for conn in conns:
-            print(conn['Id'], conn['Uuid'], conn['Type'], conn['Device'])
+        conn_values = [conn.values() for conn in conns]
+
+        for i, vals in enumerate(conn_values):
+            conn_values[i] = list(map(lambda val: colored(val, "green"), vals))
+
+        self._print_conns(conn_values)
 
     def _get_active_connections(self):
         active_conns_paths = self.get_object_property(
@@ -54,13 +60,21 @@ class Connection(WyPy):
                 if not isinstance(all_props[prop], dbus.Array)
             }
 
-            conn_props['Device'] = self._get_device_name(all_props)
+            device_name, device_type = self._get_device_info(all_props) 
+            conn_props['Device'] = device_name
+            conn_props['Type'] = self.translate_device_type(device_type)
 
             active_conns_data.append(conn_props)
 
         return active_conns_data
 
-    def _get_device_name(self, connection_props):
+    def _get_device_info(self, connection_props):
         device_obj = str(connection_props['Devices'][0])
         device_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
-        return device_props['Interface']
+        return (device_props['Interface'], int(device_props['DeviceType']))
+
+    def _print_conns(self, data):
+        table = PrettyTable(['Name', 'UUID', 'TYPE', 'DEVICE'])
+        for row in data:
+            table.add_row(row)
+        print(table)
