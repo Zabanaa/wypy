@@ -22,17 +22,21 @@ def down(conn):
     conn.deactivate()
 
 
-@click.command('show')
-@click.option('--active', is_flag=True)
+@click.command('list')
 @click.pass_obj
-def show(conn, active):
+def _list(conn):
     """List connections"""
-    if not active:
-        conn.show_all()
-    else:
-        conn.show_active()
+    conn.show_all()
+
+
+@click.command('active')
+@click.pass_obj
+def list_active(conn):
+    """List active connections"""
+    conn.show_active()
 
 
 connection.add_command(up)
 connection.add_command(down)
-connection.add_command(show)
+connection.add_command(_list)
+connection.add_command(list_active)
