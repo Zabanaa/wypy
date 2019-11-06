@@ -3,7 +3,8 @@ from wypy.utils.constants import (
     NM_OBJ_PATH,
     NM_SETTINGS_IFACE,
     NM_SETTINGS_OBJ_PATH,
-    NM_ACTIVE_CONN_IFACE
+    NM_ACTIVE_CONN_IFACE,
+    NM_DEVICE_IFACE
 )
 from wypy.wypy import WyPy
 import click
@@ -53,8 +54,13 @@ class Connection(WyPy):
                 if not isinstance(all_props[prop], dbus.Array)
             }
 
-            ## get device name (IF THERE'S A DEVICE SHOW IT ELSE PRINT '--')
-            conn_props['Device'] = str(all_props['Devices'][0])
+            conn_props['Device'] = self._get_device_name(all_props)
+
             active_conns_data.append(conn_props)
-        
+
         return active_conns_data
+
+    def _get_device_name(self, connection_props):
+        device_obj = str(connection_props['Devices'][0])
+        device_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
+        return device_props['Interface']
