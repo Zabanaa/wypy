@@ -1,4 +1,4 @@
-from wypy.utils.helpers import validate_uuid
+from wypy.utils.helpers import is_valid_uuid
 from prettytable import PrettyTable
 from termcolor import colored
 from wypy.utils.constants import (
@@ -51,7 +51,7 @@ class Connection(WyPy):
             - else call DeactivateConnection passing in the path
         """
         self._get_active_connections()
-        filter_key = 'Uuid' if validate_uuid(conn) else 'Id'
+        filter_key = 'Uuid' if is_valid_uuid(conn) else 'Id'
         conn_ids = [str(c[filter_key]) for c in self.active_connections]
 
         if conn not in conn_ids:
@@ -59,6 +59,22 @@ class Connection(WyPy):
         else:
             conn_to_deactivate = next(filter(lambda x: str(x[filter_key]) == conn, self.active_connections), None)  # noqa E501
             self.nm_iface.DeactivateConnection(conn_to_deactivate['Path'])
+    
+    def delete(self, conn):
+        click.echo(f'Deleting connection profile {conn}')
+        if is_valid_uuid(conn):
+            uuid = conn
+        else:
+            connections = self._list_connections_info()
+            conn_to_delete = next(filter(lambda x: str(x['id']) == conn, connections), None)  # noqa E501
+            try:
+                uuid = conn_to_delete['uuid']
+            except TypeError:
+                sys.exit(f'Could not delete {conn}. Connection unknown or already deleted.')
+
+        _conn = self.settings_iface.GetConnectionByUuid(uuid)
+        conn_obj = self.bus.get_object(NM_BUS_NAME, _conn)
+        conn_obj.Delete(dbus_interface=NM_CONNECTION_IFACE)
 
     def show_all(self):
         click.echo('Showing all connections ...')
