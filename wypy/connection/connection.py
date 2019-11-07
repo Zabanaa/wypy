@@ -79,19 +79,15 @@ class Connection(WyPy):
     def show_all(self):
         click.echo('Showing all connections ...')
         self._get_active_connections()
-        connections = self.settings_iface.ListConnections()
+        connections = self._list_connections_info()
 
         for conn in connections:
-            conn_obj = self.bus.get_object(NM_BUS_NAME, conn)
-            conn_iface = dbus.Interface(conn_obj,  NM_CONNECTION_IFACE)
-            conn_info = conn_iface.GetSettings()['connection']
-
             conn_data = {
-                'id': str(conn_info.get('id', '')),
-                'uuid': str(conn_info.get('uuid', '')),
-                'type': conn_info.get('type', ''),
-                'name': str(conn_info.get('interface-name', '--')),
-                'path': conn
+                'id': str(conn.get('id', '')),
+                'uuid': str(conn.get('uuid', '')),
+                'type': conn.get('type', ''),
+                'name': str(conn.get('interface-name', '--')),
+                'path': conn.get('path', '--')
             }
 
             if self._is_connection_active(conn_data['uuid']):
