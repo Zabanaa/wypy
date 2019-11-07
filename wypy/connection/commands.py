@@ -8,18 +8,12 @@ def connection(ctx):
     ctx.obj = Connection()
 
 
-@click.command('up')
-@click.pass_obj
-def up(conn):
-    """Activate a connection"""
-    conn.activate()
-
-
 @click.command('down')
+@click.argument('id', type=str, required=True)
 @click.pass_obj
-def down(conn):
+def down(conn, name):
     """Deactivate a connection"""
-    conn.deactivate()
+    conn.deactivate(name)
 
 
 @click.command('list')
@@ -36,7 +30,6 @@ def list_active(conn):
     conn.show_active()
 
 
-connection.add_command(up)
 connection.add_command(down)
 connection.add_command(_list)
 connection.add_command(list_active)
