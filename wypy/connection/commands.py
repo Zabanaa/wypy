@@ -30,6 +30,15 @@ def list_active(conn):
     conn.show_active()
 
 
+@click.command('delete')
+@click.argument('name', type=str, required=True)
+@click.pass_obj
+def delete(conn, name):
+    """Delete a connection profile"""
+    conn.delete(name)
+
+
 connection.add_command(down)
 connection.add_command(_list)
 connection.add_command(list_active)
+connection.add_command(delete)
