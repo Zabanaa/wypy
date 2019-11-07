@@ -1,7 +1,8 @@
-from wypy.utils.helpers import flatten
+from wypy.utils.helpers import validate_uuid
 from prettytable import PrettyTable
 from termcolor import colored
 from wypy.utils.constants import (
+    NM_IFACE,
     NM_BUS_NAME,
     NM_OBJ_PATH,
     NM_SETTINGS_IFACE,
@@ -13,6 +14,7 @@ from wypy.utils.constants import (
 from wypy.wypy import WyPy
 import click
 import dbus
+import sys
 
 
 class Connection(WyPy):
@@ -20,19 +22,43 @@ class Connection(WyPy):
     def __init__(self):
         super().__init__()
         self.proxy = self.bus.get_object(NM_BUS_NAME, NM_OBJ_PATH)
+        self.nm_iface = dbus.Interface(self.proxy, NM_IFACE)
         self.active_conns_prop = 'ActiveConnections'
         self.conn_props = ['Id', 'Uuid', 'Type', 'Devices']
-        self.table = PrettyTable(['NAME', 'UUID', 'TYPE', 'DEVICE'])
+        self.table = PrettyTable(['NAME', 'UUID', 'TYPE', 'DEVICE', 'PATH'])
         self.table.align = 'l'
         self.active_connections = []
         self.settings_obj = self.bus.get_object(NM_BUS_NAME, NM_SETTINGS_OBJ_PATH)  # noqa E501
         self.settings_iface = dbus.Interface(self.settings_obj, NM_SETTINGS_IFACE)  # noqa E501
 
     def activate(self):
-        click.echo('Activating connection ...')
-
-    def deactivate(self):
         click.echo('Deactivating connection ...')
+        """
+            TODO:
+                - list all connections
+                - get the one that matches the given name
+                - find out what device it belongs to
+                by calling GetDeviceByIpIface()
+                - if no connection matches the given name, exit
+                with clear and friendly error message.
+        """
+
+    def deactivate(self, conn):
+        click.echo('Deactivating connection ...')
+        """
+            - list active connections
+            - if conn_name is not in the list, error out
+            - else call DeactivateConnection passing in the path
+        """
+        self._get_active_connections()
+        filter_key = 'Uuid' if validate_uuid(conn) else 'Id'
+        conn_ids = [str(c[filter_key]) for c in self.active_connections]
+
+        if conn not in conn_ids:
+            sys.exit(f'Could not deactivate {conn}. Connection unknown or inactive.')  # noqa E501
+        else:
+            conn_to_deactivate = next(filter(lambda x: str(x[filter_key]) == conn, self.active_connections), None)  # noqa E501
+            self.nm_iface.DeactivateConnection(conn_to_deactivate['Path'])
 
     def show_all(self):
         click.echo('Showing all connections ...')
@@ -49,6 +75,7 @@ class Connection(WyPy):
                 'uuid': str(conn_info.get('uuid', '')),
                 'type': conn_info.get('type', ''),
                 'name': str(conn_info.get('interface-name', '--')),
+                'path': conn
             }
 
             if self._is_connection_active(conn_data['uuid']):
@@ -85,6 +112,7 @@ class Connection(WyPy):
             device_name, device_type = self._get_device_info(all_props) 
             conn_props['Device'] = device_name
             conn_props['Type'] = self.translate_device_type(device_type)
+            conn_props['Path'] = conn
 
             self.active_connections.append(conn_props)
 
@@ -105,3 +133,16 @@ class Connection(WyPy):
     def _color_data(self, conn):
         for key, val in conn.items():
             conn[key] = colored(val, "green")
+
+    def _list_connections_info(self):
+        connections = self.settings_iface.ListConnections()
+        result = []
+
+        for conn in connections:
+            conn_obj = self.bus.get_object(NM_BUS_NAME, conn)
+            conn_iface = dbus.Interface(conn_obj,  NM_CONNECTION_IFACE)
+            conn_info = conn_iface.GetSettings()['connection']
+            conn_info['path'] = conn
+            result.append(conn_info)
+
+        return result
