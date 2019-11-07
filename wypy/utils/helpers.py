@@ -13,7 +13,7 @@ def flatten(d, parent_key='', sep='.'):
     return dict(items)
 
 
-def validate_uuid(uuid_string):
+def is_valid_uuid(uuid_string):
     try:
         UUID(uuid_string, version=4)
     except ValueError:
