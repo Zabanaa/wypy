@@ -1,4 +1,5 @@
 from collections import MutableMapping
+from uuid import UUID
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -10,3 +11,12 @@ def flatten(d, parent_key='', sep='.'):
         else:
             items.append((new_key, v))
     return dict(items)
+
+
+def validate_uuid(uuid_string):
+    try:
+        UUID(uuid_string, version=4)
+    except ValueError:
+        return False
+    else:
+        return True
