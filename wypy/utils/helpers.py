@@ -43,3 +43,11 @@ def format_list(data_list, key='address'):
 
     ips = list(map(lambda x: str(x[key]), data_list))
     return ' - '.join(ips)
+
+
+def format_table_key(key):
+    """ 
+    Accepts a string as the only argument
+    replaces underscores with spaces and uppercases the string
+    """
+    return key.upper().replace('_', ' ')

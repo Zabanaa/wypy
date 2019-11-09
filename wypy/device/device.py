@@ -1,4 +1,4 @@
-from wypy.utils.helpers import format_list
+from wypy.utils.helpers import format_list, format_table_key
 from prettytable import PrettyTable
 from termcolor import colored
 from wypy.wypy import WyPy
@@ -45,6 +45,7 @@ class Device(WyPy):
         for device in self.all_devices:
             details = self._get_device_details(device)
             for k, v in details.items():
+                k = format_table_key(k)
                 self.details_table.add_row([colored(k, "yellow"), v])
 
             click.echo(self.details_table)
@@ -64,6 +65,7 @@ class Device(WyPy):
         device_details = self._get_device_details(device_to_show['device_path'], show_all=True)
 
         for k, v in device_details.items():
+            k = format_table_key(k)
             self.details_table.add_row([colored(k, "yellow"), v])
 
         click.echo(self.details_table)
