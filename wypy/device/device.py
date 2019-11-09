@@ -1,3 +1,4 @@
+from wypy.utils.helpers import format_list
 from prettytable import PrettyTable
 from termcolor import colored
 from wypy.wypy import WyPy
@@ -6,8 +7,10 @@ from wypy.utils.constants import (
     NM_OBJ_PATH,
     NM_IFACE,
     NM_DEVICE_IFACE,
-    NM_ACTIVE_CONN_IFACE
+    NM_ACTIVE_CONN_IFACE,
+    IP4_CONFIG_IFACE
 )
+import sys
 import click
 import dbus
 from dbus.exceptions import DBusException
@@ -19,7 +22,7 @@ class Device(WyPy):
         super().__init__()
         self.nm = self.bus.get_object(NM_BUS_NAME, NM_OBJ_PATH)
         self.nm_iface = dbus.Interface(self.nm, NM_IFACE)
-        self.status_table_keys = ['DEVICE', 'TYPE', 'STATE', 'CONNECTION', 'TYPE CODE', 'PATH']
+        self.status_table_keys = ['DEVICE', 'TYPE', 'STATE', 'CONNECTION']
         self.status_table = PrettyTable(self.status_table_keys)
         self.status_table.align = 'l'
         self.all_devices = self.get_object_property(self.nm, 'AllDevices')
@@ -49,6 +52,21 @@ class Device(WyPy):
 
     def print_details(self, device_name):
         click.echo(f'Showing device details for {device_name}...')
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        known_device_names = list(map(lambda x: str(x['name']), known_devices))
+
+        if device_name not in known_device_names:
+            err_msg = f'[Error] Could not retrieve details for {device_name}. Device Unknown.'  # noqa E501
+            sys.exit(colored(err_msg, "red"))
+
+        _filter = lambda x: str(x['name']) == device_name  # noqa E731
+        device_to_show = next(filter(_filter, known_devices), None)
+        device_details = self._get_device_details(device_to_show['device_path'], show_all=True)
+
+        for k, v in device_details.items():
+            self.details_table.add_row([colored(k, "yellow"), v])
+
+        click.echo(self.details_table)
 
     def _get_device_status(self, obj_path):
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)
@@ -66,6 +84,7 @@ class Device(WyPy):
             'connection': self._get_connetion_name(dev_conn),
             'state':  dev_state,
             'connection_path': dev_conn,
+            'device_path': obj_path
         }
 
     def _create_row(self, device_details):
@@ -77,6 +96,11 @@ class Device(WyPy):
             color = "red"
         if state in [10, 20]:
             color = "yellow"
+
+        del device_details['device_path']
+        del device_details['connection_path']
+        del device_details['state']
+
         return list(map(lambda val: colored(val, color), values))
 
     def _get_connetion_name(self, connection_path):
@@ -96,13 +120,32 @@ class Device(WyPy):
         # move that method to WyPy
         map(lambda val: str(val), _dict.values())
 
-    def _get_device_details(self, device_obj):
+    def _get_device_details(self, device_obj, show_all=False):
         dev_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
         self._stringify_dbus_values(dev_props)
         dev_status = self._get_device_status(device_obj)
 
         general_dev_info = {
-            'mtu': dev_props.get('Mtu', 'Unknown')
+            'mtu': dev_props.get('Mtu', 'Unknown'),
         }
         result = dict(dev_status, **general_dev_info)
+
+        if show_all:
+            ip4_path = dev_props['Ip4Config']
+            ip4props = self.get_all_properties(ip4_path, IP4_CONFIG_IFACE)
+
+            addresses = format_list(ip4props['AddressData'], key='address')
+            dns = format_list(ip4props['NameserverData'], key='address')
+            gateway = ip4props['Gateway'] if ip4props['Gateway'] != '' else '--'  # noqa E501
+            domains = ' / '.join(ip4props['Domains']) if len(ip4props['Domains']) != 0 else '--'  # noqa E501
+
+            ip_info = {
+                'ipv4_addresses': addresses,
+                'ipv4_dns': dns,
+                'ipv4_gateway': gateway,
+                'ipv4_domains': domains
+            }
+
+            result = dict(result, **ip_info)
+
         return result
