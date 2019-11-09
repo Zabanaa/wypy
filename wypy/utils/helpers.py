@@ -13,9 +13,13 @@ def flatten(d, parent_key='', sep='.'):
     return dict(items)
 
 
-def is_valid_uuid(uuid_string):
+def is_valid_uuid(_str):
+    """
+    Checks if _str is a uuidv4 string
+    return <bool> - Whether the string is a uuid
+    """
     try:
-        UUID(uuid_string, version=4)
+        UUID(_str, version=4)
     except ValueError:
         return False
     else:
@@ -23,6 +27,17 @@ def is_valid_uuid(uuid_string):
 
 
 def format_list(data_list, key='address'):
+    """
+    this function will map over a given list of dictionaries,
+    extract all instances dict[key] and join the
+    result into a final string.
+
+    It's particularly useful when joining lists of ip addresses
+    and domain names.
+
+    If the data_list is empty the function simply returns '--'.
+    """
+
     if len(data_list) == 0:
         return '--'
 
