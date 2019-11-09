@@ -20,3 +20,11 @@ def is_valid_uuid(uuid_string):
         return False
     else:
         return True
+
+
+def format_list(data_list, key='address'):
+    if len(data_list) == 0:
+        return '--'
+
+    ips = list(map(lambda x: str(x[key]), data_list))
+    return ' - '.join(ips)
