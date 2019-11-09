@@ -182,11 +182,27 @@ class WyPy(object):
             return 'Unknown'
 
     def translate_device_state(self, status):
+        if status == 120:
+            return 'failed'
+        if status == 110:
+            return 'deactivating'
         if status == 100:
             return "connected"
+        if status == 90:
+            return "secondaries"
+        if status == 80:
+            return "ip check"
+        if status == 70:
+            return "ip config"
+        if status == 60:
+            return "auth required"
+        if status == 50:
+            return "configuring"
+        if status == 40:
+            return "preparing"
         if status == 30:
             return "disconnected"
-        if status == 10:
-            return "unmanaged"
         if status == 20:
             return "unavailable"
+        if status == 10:
+            return "unmanaged"
