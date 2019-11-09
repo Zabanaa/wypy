@@ -44,9 +44,7 @@ class Device(WyPy):
         click.echo('list all devices ...')
         for device in self.all_devices:
             details = self._get_device_details(device)
-            for k, v in details.items():
-                k = format_table_key(k)
-                self.details_table.add_row([colored(k, "yellow"), v])
+            self._fill_details_table(details)
 
             click.echo(self.details_table)
             self.details_table.clear_rows()
@@ -62,11 +60,9 @@ class Device(WyPy):
 
         _filter = lambda x: str(x['name']) == device_name  # noqa E731
         device_to_show = next(filter(_filter, known_devices), None)
-        device_details = self._get_device_details(device_to_show['device_path'], show_all=True)
+        device_details = self._get_device_details(device_to_show['device_path'], show_all=True)  # noqa E501
 
-        for k, v in device_details.items():
-            k = format_table_key(k)
-            self.details_table.add_row([colored(k, "yellow"), v])
+        self._fill_details_table(device_details)
 
         click.echo(self.details_table)
 
@@ -83,7 +79,7 @@ class Device(WyPy):
             'name': dev_name,
             'type':  self.translate_device_type(dev_type),
             'device_status': self.translate_device_state(dev_state),
-            'connection': self._get_connetion_name(dev_conn),
+            'connection': self._get_connection_name(dev_conn),
             'state':  dev_state,
             'connection_path': dev_conn,
             'device_path': obj_path
@@ -105,7 +101,7 @@ class Device(WyPy):
 
         return list(map(lambda val: colored(val, color), values))
 
-    def _get_connetion_name(self, connection_path):
+    def _get_connection_name(self, connection_path):
         try:
             props = self.get_all_properties(
                 connection_path,
@@ -151,3 +147,8 @@ class Device(WyPy):
             result = dict(result, **ip_info)
 
         return result
+
+    def _fill_details_table(self, data):
+        for k, v in data.items():
+            k = format_table_key(k)
+            self.details_table.add_row([colored(k, "yellow"), v])
