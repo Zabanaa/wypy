@@ -140,7 +140,7 @@ class WyPy(object):
             return 'Team Master'
 
         if _type == 14:
-            return 'Generic'
+            return 'Generic / Loopback'
 
         if _type == 13:
             return 'Bridge'
@@ -180,3 +180,13 @@ class WyPy(object):
 
         if _type == 0:
             return 'Unknown'
+
+    def translate_device_state(self, status):
+        if status == 100:
+            return "connected"
+        if status == 30:
+            return "disconnected"
+        if status == 10:
+            return "unmanaged"
+        if status == 20:
+            return "unavailable"
