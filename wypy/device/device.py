@@ -22,13 +22,15 @@ class Device(WyPy):
         self.status_table_keys = ['DEVICE', 'TYPE', 'STATE', 'CONNECTION', 'TYPE CODE', 'PATH']
         self.status_table = PrettyTable(self.status_table_keys)
         self.status_table.align = 'l'
+        self.all_devices = self.get_object_property(self.nm, 'AllDevices')
+        self.details_table = PrettyTable(['PROPERTY', 'VALUE'])
+        self.details_table.align = 'l'
 
     def print_status(self):
         click.echo('Showing status ...')
-        device_paths = self.get_object_property(self.nm, 'AllDevices')
-        device_details = list(map(self._get_device_details, device_paths))  # noqa E501
-        sorted_details = sorted(device_details, key=lambda k: (k['connection'], k['type']), reverse=True)  # noqa E501
-        rows = list(map(self._create_row, sorted_details))
+        device_status = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        sorted_status = sorted(device_status, key=lambda k: (k['connection'], k['type']), reverse=True)  # noqa E501
+        rows = list(map(self._create_row, sorted_status))
 
         for row in rows:
             self.status_table.add_row(row)
@@ -37,13 +39,20 @@ class Device(WyPy):
 
     def list_all(self):
         click.echo('list all devices ...')
+        for device in self.all_devices:
+            details = self._get_device_details(device)
+            for k, v in details.items():
+                self.details_table.add_row([colored(k, "yellow"), v])
+
+            click.echo(self.details_table)
+            self.details_table.clear_rows()
 
     def print_details(self, device_name):
         click.echo(f'Showing device details for {device_name}...')
 
-    def _get_device_details(self, obj_path):
+    def _get_device_status(self, obj_path):
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)
-        map(lambda val: str(val), dev_props.values())
+        self._stringify_dbus_values(dev_props)
 
         dev_name = dev_props.get('Interface', 'Unknown')
         dev_type = dev_props.get('DeviceType', 'Unknown')
@@ -81,3 +90,19 @@ class Device(WyPy):
         except Exception:
             click.echo('Exception')
         return props['Id']
+
+    def _stringify_dbus_values(self, _dict):
+        # loop through the values and cast them appropriately
+        # move that method to WyPy
+        map(lambda val: str(val), _dict.values())
+
+    def _get_device_details(self, device_obj):
+        dev_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
+        self._stringify_dbus_values(dev_props)
+        dev_status = self._get_device_status(device_obj)
+
+        general_dev_info = {
+            'mtu': dev_props.get('Mtu', 'Unknown')
+        }
+        result = dict(dev_status, **general_dev_info)
+        return result
