@@ -40,7 +40,7 @@ def format_list(data_list, key='address'):
 
     if len(data_list) == 0:
         return '--'
-
+    # TODO: wrap this call in a try / except block
     ips = list(map(lambda x: str(x[key]), data_list))
     return ' - '.join(ips)
 
