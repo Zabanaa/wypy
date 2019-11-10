@@ -46,7 +46,7 @@ def format_list(data_list, key='address'):
 
 
 def format_table_key(key):
-    """ 
+    """
     Accepts a string as the only argument
     replaces underscores with spaces and uppercases the string
     """
