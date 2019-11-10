@@ -35,7 +35,7 @@ def format_list(data_list, key='address'):
     It's particularly useful when joining lists of ip addresses
     and domain names.
 
-    If the data_list is empty the function simply returns '--'.
+    If the case `data_list` is empty, the function will simply return: '--'.
     """
 
     if len(data_list) == 0:
