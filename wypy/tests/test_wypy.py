@@ -1,70 +1,71 @@
 from termcolor import colored
 
 
-def test_translate_status_code_connectivity(general):
+def test_translate_status_code_connectivity(wypy):
     """
     Assert General.translate_status_code method returns the
     correct string for the CONNECTIVITY property.
     """
     prop = 'CONNECTIVITY'
 
-    result = general.translate_status_code(prop, 4)
+    result = wypy.translate_status_code(prop, 4)
     assert result == colored('full', 'green')
 
-    result = general.translate_status_code(prop, 3)
+    result = wypy.translate_status_code(prop, 3)
     assert result == colored('limited', 'green')
 
-    result = general.translate_status_code(prop, 2)
+    result = wypy.translate_status_code(prop, 2)
     assert result == colored('portal', 'yellow')
 
-    result = general.translate_status_code(prop, 1)
+    result = wypy.translate_status_code(prop, 1)
     assert result == colored('none', 'red')
 
-    result = general.translate_status_code(prop, 0)
+    result = wypy.translate_status_code(prop, 0)
     assert result == colored('unknown', 'red')
 
 
-def test_translate_status_code_wifi(general):
+def test_translate_status_code_wifi(wypy):
     """
     Assert General.translate_status_code returns the
     correct string for the WIFI property.
     """
     prop = 'WIFI'
 
-    result = general.translate_status_code(prop, 1)
+    result = wypy.translate_status_code(prop, 1)
     assert result == colored('enabled', 'green')
 
-    result = general.translate_status_code(prop, 0)
+    result = wypy.translate_status_code(prop, 0)
     assert result == colored('disabled', 'red')
 
 
-def test_translate_status_code_state(general):
+def test_translate_status_code_state(wypy):
     """
     Assert General.translate_status_code returns the
     correct string for the STATE property.
     """
     prop = 'STATE'
 
-    result = general.translate_status_code(prop, 70)
+    result = wypy.translate_status_code(prop, 70)
     assert result == colored('connected', 'green')
 
-    result = general.translate_status_code(prop, 60)
+    result = wypy.translate_status_code(prop, 60)
     assert result == colored('connected (site)', 'green')
 
-    result = general.translate_status_code(prop, 50)
+    result = wypy.translate_status_code(prop, 50)
     assert result == colored('connected (local)', 'green')
 
-    result = general.translate_status_code(prop, 40)
+    result = wypy.translate_status_code(prop, 40)
     assert result == colored('connecting', 'yellow')
 
-    result = general.translate_status_code(prop, 30)
+    result = wypy.translate_status_code(prop, 30)
     assert result == colored('disconnecting', 'red')
 
-    result = general.translate_status_code(prop, 20)
+    result = wypy.translate_status_code(prop, 20)
     assert result == colored('disconnected', 'red')
 
-    result = general.translate_status_code(prop, 10)
+    result = wypy.translate_status_code(prop, 10)
     assert result == colored('asleep', 'yellow')
 
-    result = general.translate_status_code(prop, 0)
+    result = wypy.translate_status_code(prop, 0)
     assert result == colored('unknown', 'red')
+
