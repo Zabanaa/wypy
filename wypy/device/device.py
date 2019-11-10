@@ -5,14 +5,12 @@ from wypy.wypy import WyPy
 from wypy.utils.constants import (
     NM_BUS_NAME,
     NM_OBJ_PATH,
-    NM_IFACE,
     NM_DEVICE_IFACE,
     NM_ACTIVE_CONN_IFACE,
     IP4_CONFIG_IFACE
 )
 import sys
 import click
-import dbus
 from dbus.exceptions import DBusException
 
 
@@ -21,11 +19,11 @@ class Device(WyPy):
     def __init__(self):
         super().__init__()
         self.nm = self.bus.get_object(NM_BUS_NAME, NM_OBJ_PATH)
-        self.nm_iface = dbus.Interface(self.nm, NM_IFACE)
         self.status_table_keys = ['DEVICE', 'TYPE', 'STATE', 'CONNECTION']
         self.status_table = PrettyTable(self.status_table_keys)
         self.status_table.align = 'l'
         self.all_devices = self.get_object_property(self.nm, 'AllDevices')
+        self.known_device_names = []
         self.details_table = PrettyTable(['PROPERTY', 'VALUE'])
         self.details_table.align = 'l'
 
@@ -41,7 +39,7 @@ class Device(WyPy):
         click.echo(self.status_table)
 
     def list_all(self):
-        click.echo('list all devices ...')
+        click.echo('Listing all devices ...')
         for device in self.all_devices:
             details = self._get_device_details(device)
             self._fill_details_table(details)
@@ -52,9 +50,9 @@ class Device(WyPy):
     def print_details(self, device_name):
         click.echo(f'Showing device details for {device_name}...')
         known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        known_device_names = list(map(lambda x: str(x['name']), known_devices))
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
 
-        if device_name not in known_device_names:
+        if device_name not in self.known_device_names:
             err_msg = f'[Error] Could not retrieve details for {device_name}. Device Unknown.'  # noqa E501
             sys.exit(colored(err_msg, "red"))
 
@@ -88,18 +86,13 @@ class Device(WyPy):
     def _create_row(self, device_details):
         state = int(device_details['state'])
         values = device_details.values()
-        if state == 100:
-            color = "green"
-        if state == 30:
-            color = "red"
-        if state in [10, 20]:
-            color = "yellow"
+        row_color = self.get_device_state_row_color(state)
 
         del device_details['device_path']
         del device_details['connection_path']
         del device_details['state']
 
-        return list(map(lambda val: colored(val, color), values))
+        return list(map(lambda val: colored(val, row_color), values))
 
     def _get_connection_name(self, connection_path):
         try:
@@ -109,8 +102,8 @@ class Device(WyPy):
             )
         except DBusException:
             return '--'
-        except Exception:
-            click.echo('Exception')
+        except Exception as e:
+            click.echo('An error occured', str(e))
         return props['Id']
 
     def _stringify_dbus_values(self, _dict):
@@ -149,6 +142,12 @@ class Device(WyPy):
         return result
 
     def _fill_details_table(self, data):
+        """
+        1. Iterates over `data`'s items
+        2. Uppercases / colors the key in yellow
+        3. Passes the newly formatted key and its associated value to
+           PrettyTable.add_row()
+        """
         for k, v in data.items():
             k = format_table_key(k)
             self.details_table.add_row([colored(k, "yellow"), v])
