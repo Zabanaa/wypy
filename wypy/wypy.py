@@ -206,3 +206,11 @@ class WyPy(object):
             return "unavailable"
         if status == 10:
             return "unmanaged"
+
+    def get_device_state_row_color(self, status):
+        if status == 100:
+            return "green"
+        elif status in [120, 110, 30]:
+            return "red"
+        else:
+            return "yellow"
