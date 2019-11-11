@@ -1,158 +1,142 @@
-from unittest.mock import patch, call
-from wypy.wifi import WiFi
-from wypy.utils.constants import (
-    NM_OBJ_PATH,
-    NM_IFACE,
-    NM_BUS_NAME,
-    DBUS_GENERAL_PROPS
-)
 from termcolor import colored
-import subprocess
-import dbus
-import dbusmock
+from unittest.mock import call
+from wypy.utils.constants import DBUS_GENERAL_PROPS
 
 
-class TestWiFi(dbusmock.DBusTestCase):
+def test_turn_on_wifi(wifi, mocker):
+    """
+        Assert click.echo was called with the correct message passed
+        as the argument.
+        Assert WiFi._get_wifi_status_code was called and that if
+        it returns 0 (False), Wifi._enable_wifi() is called
+    """
+    intro_msg = 'Enabling WiFi ...'
 
-    @classmethod
-    def setUpClass(cls):
-        cls.start_system_bus()
-        cls.dbus_con = cls.get_dbus(system_bus=True)
+    echo_mock = mocker.patch('click.echo')
+    get_status_mock = mocker.patch.object(wifi, '_get_wifi_status_code', return_value=0)
+    wifi_mock = mocker.patch.object(wifi, '_enable_wifi')
 
-    def setUp(self):
-        self.p_mock = self.spawn_server(
-            NM_BUS_NAME,
-            NM_OBJ_PATH,
-            NM_IFACE,
-            system_bus=True,
-            stdout=subprocess.PIPE
-        )
+    wifi.turn_on()
 
-        proxy_obj = self.dbus_con.get_object(NM_BUS_NAME, NM_OBJ_PATH)
-        self.nm_iface_mock = dbus.Interface(proxy_obj, dbusmock.MOCK_IFACE)
-        # call AddMethod here
-        self.wifi = WiFi()
+    echo_mock.assert_called_once_with(intro_msg)
+    get_status_mock.assert_called_once()
+    wifi_mock.assert_called_once()
 
-    def tearDown(self):
-        self.p_mock.terminate()
-        self.p_mock.wait()
 
-    @patch.object(WiFi, '_enable_wifi')
-    @patch.object(WiFi, '_get_wifi_status_code', return_value=0)
-    @patch('click.echo')
-    def test_turn_on_wifi(self, echo_mock, get_status_mock, wifi_mock):
-        """
-            Assert click.echo was called with the correct message passed
-            as the argument.
-            Assert WiFi._get_wifi_status_code was called and that if
-            it returns 0 (False), Wifi._enable_wifi() is called
-        """
-        intro_msg = 'Enabling WiFi ...'
-        self.wifi.turn_on()
-        echo_mock.assert_called_once_with(intro_msg)
-        get_status_mock.assert_called_once()
-        wifi_mock.assert_called_once()
+def test_turn_on_wifi_error(wifi, mocker):
+    """
+        Assert click.echo was called with the correct message passed
+        as the argument.
+        Assert WiFi._get_wifi_status_code was called and that if
+        it returns 1 (True), click.echo is called with the correct
+        error message.
+    """
 
-    @patch.object(WiFi, '_enable_wifi')
-    @patch.object(WiFi, '_get_wifi_status_code', return_value=1)
-    @patch('click.echo')
-    def test_turn_on_wifi_error(self, echo_mock, get_status_mock, wifi_mock):
-        """
-            Assert click.echo was called with the correct message passed
-            as the argument.
-            Assert WiFi._get_wifi_status_code was called and that if
-            it returns 1 (True), click.echo is called with the correct
-            error message.
-        """
-        self.wifi.turn_on()
-        expected_err_msg = call('WiFi is already enabled. Skipping.')
-        get_status_mock.assert_called_once()
-        echo_mock.assert_has_calls([expected_err_msg])
+    get_status_mock = mocker.patch.object(wifi, '_get_wifi_status_code', return_value=1)
+    echo_mock = mocker.patch('click.echo')
 
-    @patch.object(WiFi, '_disable_wifi')
-    @patch.object(WiFi, '_get_wifi_status_code', return_value=1)
-    @patch('click.echo')
-    def test_turn_off_wifi(self, echo_mock, get_status_mock, wifi_mock):
-        """
-            Assert click.echo was called with the correct message passed
-            as the argument.
-            Assert WiFi._get_wifi_status_code was called and that if
-            it returns 1 (enabled), WiFi._disable_wifi is called.
-        """
-        self.wifi.turn_off()
-        intro_msg = 'Disabling WiFi ...'
-        echo_mock.assert_called_once_with(intro_msg)
-        get_status_mock.assert_called_once()
-        wifi_mock.assert_called_once()
+    wifi.turn_on()
 
-    @patch.object(WiFi, '_disable_wifi')
-    @patch.object(WiFi, '_get_wifi_status_code', return_value=0)
-    @patch('click.echo')
-    def test_turn_off_wifi_error(self, echo_mock, get_status_mock, wifi_mock):
-        """
-            Assert click.echo was called with the correct message passed
-            as the argument.
-            Assert WiFi._get_wifi_status_code was called and that if
-            it returns 0 (disabled), click.echo is called with the correct
-            error message.
-        """
-        self.wifi.turn_off()
-        expected_err_msg = call('WiFi is already disabled. Skipping.')
-        get_status_mock.assert_called_once()
-        echo_mock.assert_has_calls([expected_err_msg])
+    expected_err_msg = call('WiFi is already enabled. Skipping.')
+    get_status_mock.assert_called_once()
+    echo_mock.assert_has_calls([expected_err_msg])
 
-    @patch.object(WiFi, '_get_wifi_status_code', return_value=1)
-    @patch.object(WiFi, 'translate_status_code', return_value=colored("enabled", "green"))
-    @patch('click.echo')
-    def test_print_wifi_status(self, echo_mock, translate_mock, get_status_mock):
-        """
-            Assert Wifi.print_status() correctly retrieves the current
-            wireless state, translates it to a colored string and outputs
-            the correct message to the user.
-        """
-        expected_output = f'WiFi is {colored("enabled", "green")}'
-        wifi_prop = DBUS_GENERAL_PROPS[self.wifi.wifi_prop]
 
-        self.wifi.print_status()
+def test_turn_off_wifi(wifi, mocker):
+    """
+        Assert click.echo was called with the correct message passed
+        as the argument.
+        Assert WiFi._get_wifi_status_code was called and that if
+        it returns 1 (enabled), WiFi._disable_wifi is called.
+    """
 
-        get_status_mock.assert_called_once()
-        translate_mock.assert_called_once_with(wifi_prop, 1)
-        echo_mock.assert_called_once_with(expected_output)
+    get_status_mock = mocker.patch.object(wifi, '_get_wifi_status_code', return_value=1)
+    wifi_mock = mocker.patch.object(wifi, '_disable_wifi')
+    intro_msg = 'Disabling WiFi ...'
+    echo_mock = mocker.patch('click.echo')
 
-    @patch.object(WiFi, 'set_object_property')
-    def test_enable_wifi(self, set_prop_mock):
-        """
-            Assert Wifi._enable_wifi() calls its inherited
-            set_object_property method passing it the correct
-            proxy, prop name and value (True in this case).
-        """
+    wifi.turn_off()
 
-        self.wifi._enable_wifi()
-        set_prop_mock.assert_called_once_with(
-            proxy=self.wifi.proxy,
-            prop_name=self.wifi.wifi_prop,
-            value=True
-        )
+    echo_mock.assert_called_once_with(intro_msg)
+    get_status_mock.assert_called_once()
+    wifi_mock.assert_called_once()
 
-    @patch.object(WiFi, 'set_object_property')
-    def test_disable_wifi(self, set_prop_mock):
-        """
-            Assert Wifi._disable_wifi() calls its inherited
-            set_object_property method passing it the correct
-            proxy, prop name and value (False in this case).
-        """
 
-        self.wifi._disable_wifi()
-        set_prop_mock.assert_called_once_with(
-            proxy=self.wifi.proxy,
-            prop_name=self.wifi.wifi_prop,
-            value=False
-        )
+def test_turn_off_wifi_error(wifi, mocker):
+    """
+        Assert click.echo was called with the correct message passed
+        as the argument.
+        Assert WiFi._get_wifi_status_code was called and that if
+        it returns 0 (disabled), click.echo is called with the correct
+        error message.
+    """
+    get_status_mock = mocker.patch.object(wifi, '_get_wifi_status_code', return_value=0)
+    echo_mock = mocker.patch('click.echo')
+    expected_err_msg = call('WiFi is already disabled. Skipping.')
 
-    @patch.object(WiFi, 'get_object_property')
-    def test_get_wifi_status_code(self, get_prop_mock):
-        self.wifi._get_wifi_status_code()
-        get_prop_mock.assert_called_once_with(
-            proxy=self.wifi.proxy,
-            prop_name=self.wifi.wifi_prop
-        )
+    wifi.turn_off()
+
+    get_status_mock.assert_called_once()
+    echo_mock.assert_has_calls([expected_err_msg])
+
+
+def test_print_wifi_status(wifi, mocker):
+    """
+        Assert Wifi.print_status() correctly retrieves the current
+        wireless state, translates it to a colored string and outputs
+        the correct message to the user.
+    """
+    get_status_mock = mocker.patch.object(wifi, '_get_wifi_status_code', return_value=1)
+    echo_mock = mocker.patch('click.echo')
+    translate_mock = mocker.patch.object(wifi, 'translate_status_code', return_value=colored("enabled", "green"))
+
+    wifi_prop = DBUS_GENERAL_PROPS[wifi.wifi_prop]
+
+    wifi.print_status()
+
+    expected_output = f'WiFi is {colored("enabled", "green")}'
+    get_status_mock.assert_called_once()
+    translate_mock.assert_called_once_with(wifi_prop, 1)
+    echo_mock.assert_called_once_with(expected_output)
+
+
+def test_enable_wifi(wifi, mocker):
+    """
+        Assert Wifi._enable_wifi() calls its inherited
+        set_object_property method passing it the correct
+        proxy, prop name and value (True in this case).
+    """
+    set_prop_mock = mocker.patch.object(wifi, 'set_object_property')
+    wifi._enable_wifi()
+
+    set_prop_mock.assert_called_once_with(
+        proxy=wifi.proxy,
+        prop_name=wifi.wifi_prop,
+        value=True
+    )
+
+
+def test_disable_wifi(wifi, mocker):
+    """
+        Assert Wifi._disable_wifi() calls its inherited
+        set_object_property method passing it the correct
+        proxy, prop name and value (False in this case).
+    """
+    set_prop_mock = mocker.patch.object(wifi, 'set_object_property')
+
+    wifi._disable_wifi()
+
+    set_prop_mock.assert_called_once_with(
+        proxy=wifi.proxy,
+        prop_name=wifi.wifi_prop,
+        value=False
+    )
+
+
+def test_get_wifi_status_code(wifi, mocker):
+    get_prop_mock = mocker.patch.object(wifi, 'get_object_property')
+    wifi._get_wifi_status_code()
+    get_prop_mock.assert_called_once_with(
+        proxy=wifi.proxy,
+        prop_name=wifi.wifi_prop
+    )
