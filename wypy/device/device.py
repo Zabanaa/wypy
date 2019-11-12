@@ -76,9 +76,24 @@ class Device(WyPy):
             """.replace("  ", "")
             sys.exit(colored(err_msg, "red"))
 
-        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)
+        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
         device_obj_path = device_to_update['device_path']
         self._update_connection(device_obj_path, ifname)
+    
+    def disconnect(self, ifname):
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not disconnect "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+        
+        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
+        device_obj_path = device_to_update['device_path']
+        self._disconnect_device(device_obj_path, ifname)
 
     # --------------- #
     # Private methods #
@@ -97,7 +112,24 @@ class Device(WyPy):
             """.replace("  ", "")
             sys.exit(colored(err_msg, "red"))
         else:
-            click.echo(f'Successfully updated active connection information for "{ifname}"')
+            msg = f'Successfully updated connection information for "{ifname}"'
+            click.echo(msg)
+
+    def _disconnect_device(self, device_path, ifname):
+        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
+        device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
+
+        try:
+            device_iface.Disconnect()
+        except DBusException:
+            err_msg = f"""
+            [Error]: Could not disconnect {ifname}.
+            The device is either not active or already disconnected.
+            D-Bus object path: ({device_path})
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+        else:
+            click.echo(f'Device "{ifname}" was successfully disconnected')
 
     def _get_device_status(self, obj_path):
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)

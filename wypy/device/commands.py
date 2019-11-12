@@ -41,7 +41,16 @@ def update(dev, ifname):
     dev.update_ifname_connection(ifname)
 
 
+@click.command('disconnect')
+@click.argument('ifname', type=str, required=True)
+@click.pass_obj
+def disconnect(dev, ifname):
+    """Disconnect the device"""
+    dev.disconnect(ifname)
+
+
 device.add_command(status)
 device.add_command(list_all)
 device.add_command(get)
 device.add_command(update)
+device.add_command(disconnect)
