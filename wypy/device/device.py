@@ -11,6 +11,7 @@ from wypy.utils.constants import (
 )
 import sys
 import click
+import dbus
 from dbus.exceptions import DBusException
 
 
@@ -63,6 +64,40 @@ class Device(WyPy):
         self._fill_details_table(device_details)
 
         click.echo(self.details_table)
+
+    def update_ifname_connection(self, ifname):
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not update "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+
+        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)
+        device_obj_path = device_to_update['device_path']
+        self._update_connection(device_obj_path, ifname)
+
+    # --------------- #
+    # Private methods #
+    # --------------- #
+
+    def _update_connection(self, device_path, ifname):
+        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
+        device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
+        try:
+            device_iface.Reapply({}, 0, 0)
+        except DBusException:
+            err_msg = f"""
+            [Error]: Could not update active connection info for "{ifname}".
+            The device is not activated.
+            D-Bus object path: ({device_path})
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+        else:
+            click.echo(f'Successfully updated active connection information for "{ifname}"')
 
     def _get_device_status(self, obj_path):
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)

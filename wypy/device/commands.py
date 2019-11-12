@@ -30,6 +30,18 @@ def get(dev, name):
     dev.print_details(name)
 
 
+@click.command('update')
+@click.argument('ifname', type=str, required=True)
+@click.pass_obj
+def update(dev, ifname):
+    """
+    Update device by applying the last changes done
+    to its active connection
+    """
+    dev.update_ifname_connection(ifname)
+
+
 device.add_command(status)
 device.add_command(list_all)
 device.add_command(get)
+device.add_command(update)
