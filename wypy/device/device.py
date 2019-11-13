@@ -124,7 +124,7 @@ class Device(WyPy):
         except DBusException:
             err_msg = f"""
             [Error]: Could not disconnect {ifname}.
-            The device is either not active or already disconnected.
+            The device is either not active or is already disconnected.
             D-Bus object path: ({device_path})
             """.replace("  ", "")
             sys.exit(colored(err_msg, "red"))
