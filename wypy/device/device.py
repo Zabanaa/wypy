@@ -48,120 +48,99 @@ class Device(WyPy):
             click.echo(self.details_table)
             self.details_table.clear_rows()
 
-    def print_details(self, device_name):
-        click.echo(f'Showing device details for {device_name}...')
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if device_name not in self.known_device_names:
-            err_msg = f'[Error] Could not retrieve details for {device_name}. Device Unknown.'  # noqa E501
-            sys.exit(colored(err_msg, "red"))
-
-        _filter = lambda x: str(x['name']) == device_name  # noqa E731
-        device_to_show = next(filter(_filter, known_devices), None)
-        device_details = self._get_device_details(device_to_show['device_path'], show_all=True)  # noqa E501
+    def print_details(self, ifname):
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(str(exc), "red"))
+        else:
+            device_details = self._get_device_details(device_path, show_all=True)  # noqa E501
 
         self._fill_details_table(device_details)
 
         click.echo(self.details_table)
 
     def update_ifname_connection(self, ifname):
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if ifname not in self.known_device_names:
-            err_msg = f"""
-            [Error]: Could not update "{ifname}".
-            The requested device does not appear to exist.
-            """.replace("  ", "")
-            sys.exit(colored(err_msg, "red"))
-
-        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
-        device_obj_path = device_to_update['device_path']
-        self._update_connection(device_obj_path, ifname)
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(exc.args, "red"))
+        else:
+            self._update_connection(device_path, ifname)
 
     def disconnect(self, ifname):
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if ifname not in self.known_device_names:
-            err_msg = f"""
-            [Error]: Could not disconnect "{ifname}".
-            The requested device does not appear to exist.
-            """.replace("  ", "")
-            sys.exit(colored(err_msg, "red"))
-
-        device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
-        device_obj_path = device_to_update['device_path']
-        self._disconnect_device(device_obj_path, ifname)
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(exc.args, "red"))
+        else:
+            self._disconnect_device(device_path, ifname)
 
     def delete_iface(self, ifname):
-        click.echo(f'Deleting {ifname}')
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if ifname not in self.known_device_names:
-            err_msg = f"""
-            [Error]: Could not disconnect "{ifname}".
-            The requested device does not appear to exist.
-            """.replace("  ", "")
-            sys.exit(colored(err_msg, "red"))
-
-        device_to_delete = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
-        device_obj_path = device_to_delete['device_path']
-        self._delete_iface(device_obj_path, ifname)
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(exc.args, "red"))
+        else:
+            self._delete_iface(device_path, ifname)
 
     def manage(self, ifname, flag=True):
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if ifname not in self.known_device_names:
-            err_msg = f"""
-            [Error]: Could not disconnect "{ifname}".
-            The requested device does not appear to exist.
-            """.replace("  ", "")
-            sys.exit(colored(err_msg, "red"))
-
-        device = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
-        device_obj_path = device['device_path']
-        proxy = self.bus.get_object(NM_BUS_NAME, device_obj_path)
-        self.set_object_property(
-            proxy,
-            bus_name=NM_DEVICE_IFACE,
-            prop_name='Managed',
-            value=flag
-        )
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(exc.args, "red"))
+        else:
+            proxy = self.bus.get_object(NM_BUS_NAME, device_path)
+            self.set_object_property(
+                proxy,
+                bus_name=NM_DEVICE_IFACE,
+                prop_name='Managed',
+                value=flag
+            )
 
     def autoconnect(self, ifname, flag=True):
-        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
-        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
-
-        if ifname not in self.known_device_names:
-            err_msg = f"""
-            [Error]: Could not disconnect "{ifname}".
-            The requested device does not appear to exist.
-            """.replace("  ", "")
-            sys.exit(colored(err_msg, "red"))
-
-        device = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
-        device_obj_path = device['device_path']
-        proxy = self.bus.get_object(NM_BUS_NAME, device_obj_path)
-        self.set_object_property(
-            proxy,
-            bus_name=NM_DEVICE_IFACE,
-            prop_name='Autoconnect',
-            value=flag
-        )
+        try:
+            device_path = self._get_known_device_object_path(ifname)
+        except ValueError as exc:
+            sys.exit(colored(exc.args, "red"))
+        else:
+            proxy = self.bus.get_object(NM_BUS_NAME, device_path)
+            self.set_object_property(
+                proxy,
+                bus_name=NM_DEVICE_IFACE,
+                prop_name='Autoconnect',
+                value=flag
+            )
 
     # --------------- #
     # Private methods #
     # --------------- #
 
-    def _update_connection(self, device_path, ifname):
-        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
+    def _get_known_device_object_path(self, ifname):
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not perform the desired operation on "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            raise ValueError(err_msg)
+
+        device_info = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
+        device_path = device_info['device_path']
+
+        return device_path
+
+    def _get_device_dbus_interface(self, device_obj_path):
+        device_obj = self.bus.get_object(NM_BUS_NAME, device_obj_path)
         device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
+        return device_iface
+
+    def _update_connection(self, device_path, ifname):
+        device = self._get_device_dbus_interface(device_path)
         try:
-            device_iface.Reapply({}, 0, 0)
+            device.Reapply({}, 0, 0)
         except DBusException:
             err_msg = f"""
             [Error]: Could not update active connection info for "{ifname}".
@@ -174,11 +153,9 @@ class Device(WyPy):
             click.echo(msg)
 
     def _disconnect_device(self, device_path, ifname):
-        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
-        device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
-
+        device = self._get_device_dbus_interface(device_path)
         try:
-            device_iface.Disconnect()
+            device.Disconnect()
         except DBusException:
             err_msg = f"""
             [Error]: Could not disconnect {ifname}.
@@ -190,11 +167,9 @@ class Device(WyPy):
             click.echo(f'Device "{ifname}" was successfully disconnected')
 
     def _delete_iface(self, device_path, ifname):
-        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
-        device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
-
+        device = self._get_device_dbus_interface(device_path)
         try:
-            device_iface.Delete()
+            device.Delete()
         except DBusException as exc:
             err_msg = exc.get_dbus_message()
             err_msg = f'[Error]: Device - "{ifname}"\n{err_msg}'
