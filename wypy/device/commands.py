@@ -49,8 +49,17 @@ def disconnect(dev, ifname):
     dev.disconnect(ifname)
 
 
+@click.command('delete')
+@click.argument('ifname', type=str, required=True)
+@click.pass_obj
+def delete(dev, ifname):
+    """Delete the device"""
+    dev.delete_iface(ifname)
+
+
 device.add_command(status)
 device.add_command(list_all)
 device.add_command(get)
 device.add_command(update)
 device.add_command(disconnect)
+device.add_command(delete)
