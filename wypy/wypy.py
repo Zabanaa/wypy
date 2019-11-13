@@ -12,12 +12,14 @@ class WyPy(object):
     def set_object_property(
         self,
         proxy=None,
+        bus_name=None,
         prop_name=None,
         value=None,
         iface=dbus.PROPERTIES_IFACE
     ):
+        _bus_name = bus_name if bus_name else self.bus_name
         return proxy.Set(
-            self.bus_name,
+            _bus_name,
             prop_name,
             value,
             dbus_interface=iface
