@@ -1,6 +1,8 @@
 import pytest
+from termcolor import colored
 from dbus.exceptions import DBusException
 from unittest.mock import call
+from wypy.utils.constants import NM_BUS_NAME, NM_DEVICE_IFACE
 
 fmt_mock_path = 'wypy.device.device.format_table_key'
 colored_mock_path = 'wypy.device.device.colored'
@@ -165,30 +167,222 @@ def test_list_all(device, mocker):
     assert len(fill_details_mock.call_args_list) == len(device.all_devices)
 
 
+def test_manage_device_on(device, mocker):
+    dummy_path = '/some/path/to/device'
+    dummy_iface = 'dummy0'
+    dummy_obj = 'some_obj'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+    get_obj_mock = mocker.patch.object(
+        device.bus,
+        'get_object',
+        return_value=dummy_obj
+
+    )
+    set_prop_mock = mocker.patch.object(device, 'set_object_property')
+
+    device.manage(dummy_iface)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    get_obj_mock.assert_called_once_with(NM_BUS_NAME, dummy_path)
+    set_prop_mock.assert_called_once_with(
+        dummy_obj,
+        bus_name=NM_DEVICE_IFACE,
+        prop_name='Managed',
+        value=True
+    )
 
 
+def test_manage_device_off(device, mocker):
+    dummy_path = '/some/path/to/device'
+    dummy_iface = 'dummy0'
+    dummy_obj = 'some_obj'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+    get_obj_mock = mocker.patch.object(
+        device.bus,
+        'get_object',
+        return_value=dummy_obj
+
+    )
+    set_prop_mock = mocker.patch.object(device, 'set_object_property')
+
+    device.manage(dummy_iface, flag=False)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    get_obj_mock.assert_called_once_with(NM_BUS_NAME, dummy_path)
+    set_prop_mock.assert_called_once_with(
+        dummy_obj,
+        bus_name=NM_DEVICE_IFACE,
+        prop_name='Managed',
+        value=False
+    )
 
 
+def test_manage_device_unknown(device, mocker):
+    device.known_device_names = ['/dev/1', '/dev/2', '/dev/3']
+    dummy_iface = 'unknown_iface'
+
+    with pytest.raises(SystemExit) as exc:
+        device.manage(dummy_iface)
+
+    assert dummy_iface in str(exc.value)
 
 
+def test_autoconnect_device_on(device, mocker):
+    dummy_path = '/some/path/to/device'
+    dummy_iface = 'dummy0'
+    dummy_obj = 'some_obj'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+    get_obj_mock = mocker.patch.object(
+        device.bus,
+        'get_object',
+        return_value=dummy_obj
+
+    )
+    set_prop_mock = mocker.patch.object(device, 'set_object_property')
+
+    device.autoconnect(dummy_iface)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    get_obj_mock.assert_called_once_with(NM_BUS_NAME, dummy_path)
+    set_prop_mock.assert_called_once_with(
+        dummy_obj,
+        bus_name=NM_DEVICE_IFACE,
+        prop_name='Autoconnect',
+        value=True
+    )
 
 
+def test_autoconnect_device_off(device, mocker):
+    dummy_path = '/some/path/to/device'
+    dummy_iface = 'dummy0'
+    dummy_obj = 'some_obj'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+    get_obj_mock = mocker.patch.object(
+        device.bus,
+        'get_object',
+        return_value=dummy_obj
+
+    )
+    set_prop_mock = mocker.patch.object(device, 'set_object_property')
+
+    device.autoconnect(dummy_iface, flag=False)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    get_obj_mock.assert_called_once_with(NM_BUS_NAME, dummy_path)
+    set_prop_mock.assert_called_once_with(
+        dummy_obj,
+        bus_name=NM_DEVICE_IFACE,
+        prop_name='Autoconnect',
+        value=False
+    )
 
 
+def test_autoconnect_device_unknown(device, mocker):
+    device.known_device_names = ['/dev/1', '/dev/2', '/dev/3']
+    dummy_iface = 'unknown_iface'
+
+    with pytest.raises(SystemExit) as exc:
+        device.autoconnect(dummy_iface)
+
+    assert dummy_iface in str(exc.value)
 
 
+def test_disconnect_device(device, mocker):
+    dummy_iface = 'some_iface'
+    dummy_path = '/some/path/to/device'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+    disconnect_mock = mocker.patch.object(device, '_disconnect_device')
+
+    device.disconnect(dummy_iface)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    disconnect_mock.assert_called_once_with(dummy_path, dummy_iface)
 
 
+def test_disconnect_device_unknown(device, mocker):
+    device.known_device_names = ['/dev/1', '/dev/2', '/dev/3']
+    dummy_iface = 'unknown_iface'
+
+    with pytest.raises(SystemExit) as exc:
+        device.disconnect(dummy_iface)
+
+    assert dummy_iface in str(exc.value)
 
 
+def test_update_device(device, mocker):
+    dummy_iface = 'some_iface'
+    dummy_path = '/some/path/to/device'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+
+    update_mock = mocker.patch.object(device, '_update_connection')
+
+    device.update_ifname_connection(dummy_iface)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    update_mock.assert_called_once_with(dummy_path, dummy_iface)
 
 
+def test_update_device_unknown(device, mocker):
+    device.known_device_names = ['/dev/1', '/dev/2', '/dev/3']
+    dummy_iface = 'unknown_iface'
+
+    with pytest.raises(SystemExit) as exc:
+        device.update_ifname_connection(dummy_iface)
+
+    assert dummy_iface in str(exc.value)
 
 
+def test_delete_device(device, mocker):
+    dummy_iface = 'some_iface'
+    dummy_path = '/some/path/to/device'
+    dev_path_mock = mocker.patch.object(
+        device,
+        '_get_known_device_object_path',
+        return_value=dummy_path
+    )
+
+    delete_mock = mocker.patch.object(device, '_delete_iface')
+
+    device.delete_iface(dummy_iface)
+
+    dev_path_mock.assert_called_once_with(dummy_iface)
+    delete_mock.assert_called_once_with(dummy_path, dummy_iface)
 
 
+def test_delete_device_unknown(device, mocker):
+    device.known_device_names = ['/dev/1', '/dev/2', '/dev/3']
+    dummy_iface = 'unknown_iface'
+
+    with pytest.raises(SystemExit) as exc:
+        device.delete_iface(dummy_iface)
+
+    assert dummy_iface in str(exc.value)
 
 
-
-
-
+# def test_disconnect_device_already_down(device, mocker):
+#     """need dbus for that one"""
+#     pass
