@@ -58,7 +58,11 @@ def delete(dev, ifname):
 
 
 @click.command('manage')
-@click.option('--off', is_flag=True)
+@click.option(
+    '--off',
+    is_flag=True,
+    help='Disable device management by NetworkManager'
+)
 @click.argument('ifname', type=str, required=True)
 @click.pass_obj
 def manage(dev, ifname, off):
@@ -69,6 +73,18 @@ def manage(dev, ifname, off):
         dev.manage(ifname)
 
 
+@click.command('autoconnect')
+@click.option('--disable', is_flag=True, help='Disable autoconnect')
+@click.argument('ifname', type=str, required=True)
+@click.pass_obj
+def autoconnect(dev, ifname, disable):
+    """Enable / Disable autoconnect on the device"""
+    if disable:
+        dev.autoconnect(ifname, flag=False)
+    else:
+        dev.autoconnect(ifname)
+
+
 device.add_command(status)
 device.add_command(list_all)
 device.add_command(get)
@@ -76,3 +92,4 @@ device.add_command(update)
 device.add_command(disconnect)
 device.add_command(delete)
 device.add_command(manage)
+device.add_command(autoconnect)

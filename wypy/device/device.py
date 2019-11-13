@@ -132,6 +132,27 @@ class Device(WyPy):
             value=flag
         )
 
+    def autoconnect(self, ifname, flag=True):
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not disconnect "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+
+        device = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
+        device_obj_path = device['device_path']
+        proxy = self.bus.get_object(NM_BUS_NAME, device_obj_path)
+        self.set_object_property(
+            proxy,
+            bus_name=NM_DEVICE_IFACE,
+            prop_name='Autoconnect',
+            value=flag
+        )
+
     # --------------- #
     # Private methods #
     # --------------- #
