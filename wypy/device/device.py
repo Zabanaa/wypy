@@ -79,7 +79,7 @@ class Device(WyPy):
         device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
         device_obj_path = device_to_update['device_path']
         self._update_connection(device_obj_path, ifname)
-    
+
     def disconnect(self, ifname):
         known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
         self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
@@ -90,10 +90,47 @@ class Device(WyPy):
             The requested device does not appear to exist.
             """.replace("  ", "")
             sys.exit(colored(err_msg, "red"))
-        
+
         device_to_update = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
         device_obj_path = device_to_update['device_path']
         self._disconnect_device(device_obj_path, ifname)
+
+    def delete_iface(self, ifname):
+        click.echo(f'Deleting {ifname}')
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not disconnect "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+
+        device_to_delete = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
+        device_obj_path = device_to_delete['device_path']
+        self._delete_iface(device_obj_path, ifname)
+
+    def manage(self, ifname, flag=True):
+        known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
+        self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
+
+        if ifname not in self.known_device_names:
+            err_msg = f"""
+            [Error]: Could not disconnect "{ifname}".
+            The requested device does not appear to exist.
+            """.replace("  ", "")
+            sys.exit(colored(err_msg, "red"))
+
+        device = next(filter(lambda x: str(x['name']) == ifname, known_devices), None)  # noqa E501
+        device_obj_path = device['device_path']
+        proxy = self.bus.get_object(NM_BUS_NAME, device_obj_path)
+        self.set_object_property(
+            proxy,
+            bus_name=NM_DEVICE_IFACE,
+            prop_name='Managed',
+            value=flag
+        )
 
     # --------------- #
     # Private methods #
@@ -130,6 +167,19 @@ class Device(WyPy):
             sys.exit(colored(err_msg, "red"))
         else:
             click.echo(f'Device "{ifname}" was successfully disconnected')
+
+    def _delete_iface(self, device_path, ifname):
+        device_obj = self.bus.get_object(NM_BUS_NAME, device_path)
+        device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
+
+        try:
+            device_iface.Delete()
+        except DBusException as exc:
+            err_msg = exc.get_dbus_message()
+            err_msg = f'[Error]: Device - "{ifname}"\n{err_msg}'
+            sys.exit(colored(err_msg, "red"))
+        else:
+            click.echo(f"Successfully deleted {ifname}")
 
     def _get_device_status(self, obj_path):
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)

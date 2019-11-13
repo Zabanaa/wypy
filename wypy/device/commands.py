@@ -57,9 +57,22 @@ def delete(dev, ifname):
     dev.delete_iface(ifname)
 
 
+@click.command('manage')
+@click.option('--off', is_flag=True)
+@click.argument('ifname', type=str, required=True)
+@click.pass_obj
+def manage(dev, ifname, off):
+    """Manage / Unmanage the device"""
+    if off:
+        dev.manage(ifname, flag=False)
+    else:
+        dev.manage(ifname)
+
+
 device.add_command(status)
 device.add_command(list_all)
 device.add_command(get)
 device.add_command(update)
 device.add_command(disconnect)
 device.add_command(delete)
+device.add_command(manage)
