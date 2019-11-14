@@ -140,3 +140,16 @@ def test_get_wifi_status_code(wifi, mocker):
         proxy=wifi.proxy,
         prop_name=wifi.wifi_prop
     )
+
+
+# TODO:
+
+# _format_bitrate
+# _get_mode
+# _get_bars
+# _get_ssid
+# _extract_ap_info
+# _get_all_access_points
+# _filter_wifi_devices
+# _get_wireless_device_path
+# _list_access_points
