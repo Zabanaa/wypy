@@ -28,6 +28,14 @@ def wifi_status():
     wifi.print_status()
 
 
+@click.command('list')
+def list_access_points():
+    """List currently available access points"""
+    wifi = WiFi()
+    wifi.list_access_points()
+
+
 wifi.add_command(turn_wifi_on)
 wifi.add_command(turn_wifi_off)
 wifi.add_command(wifi_status)
+wifi.add_command(list_access_points)
