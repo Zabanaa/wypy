@@ -28,11 +28,13 @@ class WyPy(object):
     def get_object_property(
         self,
         proxy=None,
+        bus_name=None,
         prop_name=None,
         iface=dbus.PROPERTIES_IFACE
     ):
+        _bus_name = bus_name if bus_name else self.bus_name
         return proxy.Get(
-            self.bus_name,
+            _bus_name,
             prop_name,
             dbus_interface=iface
         )
