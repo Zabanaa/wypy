@@ -16,6 +16,10 @@ NM_CONNECTION_IFACE = 'org.freedesktop.NetworkManager.Settings.Connection'
 
 IP4_CONFIG_IFACE = 'org.freedesktop.NetworkManager.IP4Config'
 
+NM_WIRELESS_IFACE = 'org.freedesktop.NetworkManager.Device.Wireless'
+
+NM_ACCESS_POINT_IFACE = 'org.freedesktop.NetworkManager.AccessPoint'
+
 DBUS_GENERAL_PROPS = {
     'Connectivity': 'CONNECTIVITY',
     'State': 'STATE',
