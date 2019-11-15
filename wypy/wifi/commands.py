@@ -3,42 +3,43 @@ import click
 
 
 @click.group('wifi')
-def wifi():
-    pass
+@click.pass_context
+def wifi(ctx):
+    ctx.obj = WiFi()
 
 
 @click.command('on')
-def turn_wifi_on():
+@click.pass_obj
+def turn_wifi_on(wifi):
     """Enable WiFi"""
-    wifi = WiFi()
     wifi.turn_on()
 
 
 @click.command('off')
-def turn_wifi_off():
+@click.pass_obj
+def turn_wifi_off(wifi):
     """Disable WiFi"""
-    wifi = WiFi()
     wifi.turn_off()
 
 
 @click.command('status')
-def wifi_status():
+@click.pass_obj
+def wifi_status(wifi):
     """Print current WiFi status"""
-    wifi = WiFi()
     wifi.print_status()
 
 
 @click.command('list')
-def list_access_points():
+@click.pass_obj
+def list_access_points(wifi):
     """List currently available access points"""
-    wifi = WiFi()
     wifi.list_access_points()
 
 
 @click.command('rescan')
-def rescan():
+@click.pass_obj
+def rescan(wifi):
     """Force WyPy to scan for available access points"""
-    wifi = WiFi()
     wifi.rescan()
 
 

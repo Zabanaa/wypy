@@ -3,36 +3,35 @@ from .networking import Network
 
 
 @click.group('network')
-def network():
-    pass
+@click.pass_context
+def network(ctx):
+    ctx.obj = Network()
 
 
 @click.command('on')
-def turn_on():
+@click.pass_obj
+def turn_on(network):
     """Turn networking capabiliy on"""
-    click.echo('Enabling networking capability')
-    network = Network()
     network.turn_on()
 
 
 @click.command('off')
-def turn_off():
+@click.pass_obj
+def turn_off(network):
     """Turn networking capabiliy off"""
-    click.echo('Disabling networking capability')
-    network = Network()
     network = network.turn_off()
 
 
 @click.command('connectivity')
 @click.option('--check', is_flag=True)
-def connectivity(check):
+@click.pass_obj
+def connectivity(network, check):
     if check:
         click.echo('Checking connectivity again ...')
     """
     Get connectivity state.
     If check is passed, WyPy will perform a check on NetworkManager
     """
-    network = Network()
     network.get_connectivity_state()
 
 

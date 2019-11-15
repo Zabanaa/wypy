@@ -3,21 +3,22 @@ from .general import General
 
 
 @click.group('general')
-def general():
-    pass
+@click.pass_context
+def general(ctx):
+    ctx.obj = General()
 
 
-@general.command()
-def status():
+@click.command()
+@click.pass_obj
+def status(gen):
     """Print general NetworkManager status"""
-    gen = General()
     gen.show_status()
 
 
 @general.command()
-def hostname():
+@click.pass_obj
+def hostname(gen):
     """Print hostname"""
-    gen = General()
     gen.get_hostname()
 
 
