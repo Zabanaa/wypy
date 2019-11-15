@@ -1,5 +1,6 @@
 from termcolor import colored
 from prettytable import PrettyTable
+from dbus.exceptions import DBusException
 from wypy.utils.constants import (
     NM_BUS_NAME,
     NM_OBJ_PATH,
@@ -120,9 +121,22 @@ class WiFi(WyPy):
         return bool(real) and True and device_type == 2
 
     def _get_all_access_points(self, wifi_dev_obj):
+
+        last_scan = self.get_object_property(
+            proxy=wifi_dev_obj,
+            bus_name=NM_WIRELESS_IFACE,
+            prop_name='LastScan'
+        )
+
         wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
-        wifi_iface.RequestScan({})
-        time.sleep(2)
+        try:
+            wifi_iface.RequestScan({})
+        except DBusException as exc:
+            msg = exc.get_dbus_message()
+            err = "Scanning not allowed immediately following previous scan"
+            if msg == err:
+                time.sleep(2)
+
         access_points = wifi_iface.GetAllAccessPoints()
         access_points = list(map(self._extract_ap_info, access_points))
         return access_points
