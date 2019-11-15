@@ -43,8 +43,16 @@ def rescan(wifi):
     wifi.rescan()
 
 
+@click.command('connect')
+@click.pass_obj
+def connect(wifi):
+    """Connect to a wireless access point"""
+    wifi.connect()
+
+
 wifi.add_command(turn_wifi_on)
 wifi.add_command(turn_wifi_off)
 wifi.add_command(wifi_status)
 wifi.add_command(list_access_points)
 wifi.add_command(rescan)
+wifi.add_command(connect)

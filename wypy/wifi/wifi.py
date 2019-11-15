@@ -10,6 +10,10 @@ from wypy.utils.constants import (
     NM_WIRELESS_IFACE,
     NM_ACCESS_POINT_IFACE
 )
+from wypy.utils.helpers import (
+    format_connection_name,
+    user_choice_to_bool
+)
 from wypy.wypy import WyPy
 import sys
 import click
@@ -50,6 +54,17 @@ class WiFi(WyPy):
         wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
         self._request_scan(wifi_iface)
         click.echo('Done !')
+
+    def connect(self, ap_name, password):
+        """
+            - get all connections
+            - is there a matching known connection with that name ?
+                - if so is it active ?
+                    - if it's active activate it
+            - if there is no matching connection
+            - add and activate one passing it the type, name, and password (as per the example on github)
+        """
+        pass
 
     def turn_on(self):
         click.echo('Enabling WiFi ...')
@@ -94,6 +109,8 @@ class WiFi(WyPy):
         )
 
     def _create_row(self, ap_data):
+        del ap_data['dbus_path']
+
         signal = ap_data['signal']
         values = ap_data.values()
 
@@ -159,7 +176,9 @@ class WiFi(WyPy):
             'mode': self._get_mode(props.get('Mode', '--')),
             'rate': self._format_bitrate(props.get('MaxBitrate')),
             'signal': int(props.get('Strength', '--')),
-            'bars': self._get_bars(props.get('Strength'))
+            'bars': self._get_bars(props.get('Strength')),
+            'dbus_path': ap_path
+
         }
 
     def _get_ssid(self, ssid_byte_list):

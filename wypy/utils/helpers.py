@@ -51,3 +51,23 @@ def format_table_key(key):
     replaces underscores with spaces and uppercases the string
     """
     return key.upper().replace('_', ' ')
+
+
+def format_connection_name(name):
+    """
+        Takes a connection name and replaces
+        every space with an underscore.
+    """
+    return name.replace(' ', '_')
+
+
+def user_choice_to_bool(choice):
+    """
+
+    Arguments:
+        choice {[string]} -- [the choice the user was prompted to make]
+
+    Returns:
+        [boolean] -- [the choice]
+    """
+    return True if choice == 'yes' else False
