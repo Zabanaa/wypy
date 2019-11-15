@@ -35,7 +35,15 @@ def list_access_points():
     wifi.list_access_points()
 
 
+@click.command('rescan')
+def rescan():
+    """Force WyPy to scan for available access points"""
+    wifi = WiFi()
+    wifi.rescan()
+
+
 wifi.add_command(turn_wifi_on)
 wifi.add_command(turn_wifi_off)
 wifi.add_command(wifi_status)
 wifi.add_command(list_access_points)
+wifi.add_command(rescan)

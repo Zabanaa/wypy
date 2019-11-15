@@ -34,13 +34,22 @@ class WiFi(WyPy):
         click.echo("Scanning for available access points ...")
         wifi_dev_path = self._get_wireless_device_path()
         wifi_dev_obj = self.bus.get_object(NM_BUS_NAME, wifi_dev_path)
-        access_points = self._get_all_access_points(wifi_dev_obj)
+        wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
+        access_points = self._get_all_access_points(wifi_iface)
         rows = list(map(self._create_row, access_points))
 
         for row in rows:
             self.status_table.add_row(row)
 
         click.echo(self.status_table)
+
+    def rescan(self):
+        click.echo('Performing rescan ...')
+        wifi_dev_path = self._get_wireless_device_path()
+        wifi_dev_obj = self.bus.get_object(NM_BUS_NAME, wifi_dev_path)
+        wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
+        self._request_scan(wifi_iface)
+        click.echo('Done !')
 
     def turn_on(self):
         click.echo('Enabling WiFi ...')
@@ -120,26 +129,25 @@ class WiFi(WyPy):
         real, device_type = device_info['Real'], device_info['DeviceType']
         return bool(real) and True and device_type == 2
 
-    def _get_all_access_points(self, wifi_dev_obj):
+    def _get_all_access_points(self, wifi_iface):
 
-        last_scan = self.get_object_property(
-            proxy=wifi_dev_obj,
-            bus_name=NM_WIRELESS_IFACE,
-            prop_name='LastScan'
-        )
-
-        wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
         try:
-            wifi_iface.RequestScan({})
+            self._request_scan(wifi_iface)
         except DBusException as exc:
             msg = exc.get_dbus_message()
             err = "Scanning not allowed immediately following previous scan"
             if msg == err:
                 time.sleep(2)
 
-        access_points = wifi_iface.GetAllAccessPoints()
-        access_points = list(map(self._extract_ap_info, access_points))
+        access_points_paths = self._list_ap_paths(wifi_iface)
+        access_points = list(map(self._extract_ap_info, access_points_paths))
         return access_points
+
+    def _list_ap_paths(self, wifi_iface):
+        return wifi_iface.GetAllAccessPoints()
+
+    def _request_scan(self, wifi_iface):
+        wifi_iface.RequestScan({})
 
     def _extract_ap_info(self, ap_path):
         props = self.get_all_properties(ap_path, NM_ACCESS_POINT_IFACE)
