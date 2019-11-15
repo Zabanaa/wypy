@@ -134,7 +134,7 @@ class WiFi(WyPy):
         try:
             self._request_scan(wifi_iface)
         except SystemExit:
-            time.sleep(2)
+            time.sleep(4)
 
         access_points_paths = self._list_ap_paths(wifi_iface)
         access_points = list(map(self._extract_ap_info, access_points_paths))
