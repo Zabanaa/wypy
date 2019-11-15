@@ -5,6 +5,7 @@ import click
 @click.group('wifi')
 @click.pass_context
 def wifi(ctx):
+    """Interact with the wireless device(s)"""
     ctx.obj = WiFi()
 
 

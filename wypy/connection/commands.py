@@ -5,6 +5,7 @@ from .connection import Connection
 @click.group('connection')
 @click.pass_context
 def connection(ctx):
+    """Connection related subcommands"""
     ctx.obj = Connection()
 
 

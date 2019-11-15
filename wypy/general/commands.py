@@ -5,6 +5,7 @@ from .general import General
 @click.group('general')
 @click.pass_context
 def general(ctx):
+    """Gather general system information"""
     ctx.obj = General()
 
 

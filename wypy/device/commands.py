@@ -5,6 +5,7 @@ from .device import Device
 @click.group('device')
 @click.pass_context
 def device(ctx):
+    """Perform actions on the available device(s)"""
     ctx.obj = Device()
 
 

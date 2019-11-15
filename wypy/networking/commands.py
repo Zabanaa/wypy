@@ -5,6 +5,7 @@ from .networking import Network
 @click.group('network')
 @click.pass_context
 def network(ctx):
+    """Perform networking actions"""
     ctx.obj = Network()
 
 
@@ -23,15 +24,19 @@ def turn_off(network):
 
 
 @click.command('connectivity')
-@click.option('--check', is_flag=True)
+@click.option(
+    '--check', 
+    is_flag=True, 
+    help='force WyPy to recheck connectivity state'
+)
 @click.pass_obj
 def connectivity(network, check):
-    if check:
-        click.echo('Checking connectivity again ...')
     """
     Get connectivity state.
     If check is passed, WyPy will perform a check on NetworkManager
     """
+    if check:
+        click.echo('Checking connectivity again ...')
     network.get_connectivity_state()
 
 

@@ -10,10 +10,6 @@ from wypy.utils.constants import (
     NM_WIRELESS_IFACE,
     NM_ACCESS_POINT_IFACE
 )
-from wypy.utils.helpers import (
-    format_connection_name,
-    user_choice_to_bool
-)
 from wypy.wypy import WyPy
 import sys
 import click
@@ -32,7 +28,7 @@ class WiFi(WyPy):
         self.status_table.border = False
         self.status_table.sortby = 'SIGNAL'
         self.status_table.left_padding_width = 0
-        self.status_table.right_padding_width =  8
+        self.status_table.right_padding_width = 8
 
     def list_access_points(self):
         click.echo("Scanning for available access points ...")
