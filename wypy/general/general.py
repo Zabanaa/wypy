@@ -1,7 +1,7 @@
-from dbus import String as _str
 import click
 from wypy.wypy import WyPy
 from wypy.utils.constants import (
+    NM_SETTINGS_IFACE,
     NM_SETTINGS_OBJ_PATH,
     NM_OBJ_PATH,
     NM_IFACE,
@@ -29,7 +29,11 @@ class General(WyPy):
 
     def get_hostname(self):
         proxy = self.bus.get_object(self.bus_name, NM_SETTINGS_OBJ_PATH)
-        hostname = self.get_object_property(proxy=proxy, prop_name='Hostname')
+        hostname = self.get_object_property(
+            proxy=proxy,
+            bus_name=NM_SETTINGS_IFACE,
+            prop_name='Hostname'
+        )
         click.echo(f'Hostname: {hostname}')
 
     # private methods
