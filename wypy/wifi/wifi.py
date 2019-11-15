@@ -133,11 +133,8 @@ class WiFi(WyPy):
 
         try:
             self._request_scan(wifi_iface)
-        except DBusException as exc:
-            msg = exc.get_dbus_message()
-            err = "Scanning not allowed immediately following previous scan"
-            if msg == err:
-                time.sleep(2)
+        except SystemExit:
+            time.sleep(2)
 
         access_points_paths = self._list_ap_paths(wifi_iface)
         access_points = list(map(self._extract_ap_info, access_points_paths))
@@ -147,7 +144,13 @@ class WiFi(WyPy):
         return wifi_iface.GetAllAccessPoints()
 
     def _request_scan(self, wifi_iface):
-        wifi_iface.RequestScan({})
+        try:
+            wifi_iface.RequestScan({})
+        except DBusException as exc:
+            msg = exc.get_dbus_message()
+            err = "Scanning not allowed immediately following previous scan"
+            if msg == err:
+                sys.exit(colored(f"[Error]: {msg}", "red"))
 
     def _extract_ap_info(self, ap_path):
         props = self.get_all_properties(ap_path, NM_ACCESS_POINT_IFACE)
