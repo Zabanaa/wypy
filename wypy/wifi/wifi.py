@@ -128,23 +128,26 @@ class WiFi(WyPy):
         return list(map(lambda val: colored(val, color), values)) 
 
     def _get_wireless_device_path(self):
-        nm = dbus.Interface(self.proxy, NM_IFACE)
-        devices_paths = nm.GetAllDevices()
+        devices_paths = self._get_all_devices_paths()
         all_devices = list(map(lambda dev: self.get_all_properties(dev, NM_DEVICE_IFACE), devices_paths))  # noqa E501
-        wireless_devices = list(filter(self._filter_wifi_devices, zip(devices_paths, all_devices)))  # noqa E501
+        wireless_devices = list(filter(self._is_device_wifi, zip(devices_paths, all_devices)))  # noqa E501
 
         try:
-            wifi_dev_path = wireless_devices[0] 
+            wifi_dev_path = wireless_devices[0] # extract the first real wifi device that's returned
         except Exception:
             err_msg = '[Error]: No wireless device found'
             sys.exit(colored(err_msg, "red"))
         else:
             return wifi_dev_path[0]
 
-    def _filter_wifi_devices(self, device):
+    def _get_all_devices_paths(self):
+        nm = dbus.Interface(self.proxy, NM_IFACE)
+        return nm.GetAllDevices()
+
+    def _is_device_wifi(self, device):
         device_info = device[1]
         real, device_type = device_info['Real'], device_info['DeviceType']
-        return bool(real) and True and device_type == 2
+        return bool(real) and device_type == 2
 
     def _get_all_access_points(self, wifi_iface):
 
@@ -193,11 +196,11 @@ class WiFi(WyPy):
 
     def _get_bars(self, signal):
         signal = int(signal)
-        if signal in range(0, 31):
+        if signal in range(0, 30):
             return "*"
-        elif signal in range(30, 61):
+        elif signal in range(30, 60):
             return "**"
-        elif signal in range(60, 81):
+        elif signal in range(60, 80):
             return "***"
         elif signal in range(80, 101):
             return "****"
@@ -216,7 +219,7 @@ class WiFi(WyPy):
             return "Infra"
 
         if mode == 1:
-            return "AdHoc"
+            return "Ad Hoc"
 
         if mode == 0:
             return "Unknown"
