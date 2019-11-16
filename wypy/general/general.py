@@ -20,6 +20,9 @@ class General(WyPy):
         ]
 
     def show_status(self):
+        """
+        Display the general status of NetworkManager
+        """
         status_info = self._get_status_info()
         click.echo('WyPy - General status report \n')
         for prop in status_info:
@@ -28,6 +31,10 @@ class General(WyPy):
             click.echo(f'{name}: {self.translate_status_code(name, status_code)} \n')  # noqa: E501
 
     def get_hostname(self):
+        """
+        Get the 'Hostname' property on the main NetworkManager
+        d-bus interface and echo it to the user.
+        """
         proxy = self.bus.get_object(self.bus_name, NM_SETTINGS_OBJ_PATH)
         hostname = self.get_object_property(
             proxy=proxy,
@@ -36,8 +43,21 @@ class General(WyPy):
         )
         click.echo(f'Hostname: {hostname}')
 
-    # private methods
+    #   ---------------
+    #
+    #   Private Methods
+    #
+    #   ---------------
+
     def _get_status_info(self):
+        """
+        Get all properties available on the main NetworkManager
+        dbus interface. Filter only those listed in self.status_properties.
+
+        Returns:
+            status_info -- list of dictionaries each containing
+            information on the properties listed in self.status_properties.
+        """
         props = self.get_all_properties(
             object_path=NM_OBJ_PATH,
             iface_name=NM_IFACE

@@ -32,7 +32,7 @@ class Connection(WyPy):
         self.settings_iface = dbus.Interface(self.settings_obj, NM_SETTINGS_IFACE)  # noqa E501
 
     def activate(self):
-        click.echo('Deactivating connection ...')
+        click.echo('Activating connection ...')
         """
             TODO:
                 - list all connections
@@ -44,12 +44,13 @@ class Connection(WyPy):
         """
 
     def deactivate(self, conn):
+        """
+        Deactivates a connection.
+
+        Arguments:
+            conn {[string]} -- [uuid / name of the connection to delete]
+        """
         click.echo('Deactivating connection ...')
-        """
-            - list active connections
-            - if conn_name is not in the list, error out
-            - else call DeactivateConnection passing in the path
-        """
         self._get_active_connections()
         filter_key = 'Uuid' if is_valid_uuid(conn) else 'Id'
         conn_ids = [str(c[filter_key]) for c in self.active_connections]
@@ -59,8 +60,18 @@ class Connection(WyPy):
         else:
             conn_to_deactivate = next(filter(lambda x: str(x[filter_key]) == conn, self.active_connections), None)  # noqa E501
             self.nm_iface.DeactivateConnection(conn_to_deactivate['Path'])
-    
+
     def delete(self, conn):
+        """
+        Deletes a connection profile.
+        If conn is a valid uuid, it will be used to retrieve the connection.
+        If not, WyPy will try to filter all known connections
+        until it finds a match.
+        If no match is found, the program exits with an error message.
+
+        Arguments:
+            conn {[string]} -- [uuid / name of the connection to delete]
+        """
         click.echo(f'Deleting connection profile {conn}')
         if is_valid_uuid(conn):
             uuid = conn
@@ -77,6 +88,9 @@ class Connection(WyPy):
         conn_obj.Delete(dbus_interface=NM_CONNECTION_IFACE)
 
     def show_all(self):
+        """
+        Echos the list of all available connections to the user.
+        """
         click.echo('Showing all connections ...')
         self._get_active_connections()
         connections = self._list_connections_info()
@@ -98,6 +112,9 @@ class Connection(WyPy):
         click.echo(self.table)
 
     def show_active(self):
+        """
+        Echos the list of active connections to the user.
+        """
         click.echo('Showing active connections ...')
         self._get_active_connections()
         conn_values = [conn.values() for conn in self.active_connections]
@@ -107,7 +124,19 @@ class Connection(WyPy):
 
         self._print_conns(conn_values)
 
+    #   ---------------
+    #
+    #   Private Methods
+    #
+    #   ---------------
+
     def _get_active_connections(self):
+        """
+        Retrieves the list of active connection on the system.
+        For each active connection found, a dict containing only
+        the necessary information is created and appended to
+        self.active_connections.
+        """
         active_conns_paths = self.get_object_property(
             proxy=self.proxy,
             prop_name=self.active_conns_prop
@@ -129,24 +158,67 @@ class Connection(WyPy):
             self.active_connections.append(conn_props)
 
     def _get_device_info(self, connection_props):
+        """
+        Extract both the name and type of the device associated with
+        the given connection.
+
+        Arguments:
+            connection_props {[dict]} -- [the connection's properties]
+
+        Returns:
+            [tuple] -- [device name and type associated with the connection]
+        """
         device_obj = str(connection_props['Devices'][0])
         device_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
         return (device_props['Interface'], int(device_props['DeviceType']))
 
     def _print_conns(self, data):
+        """
+        Populates self.table with the connection information.
+        Displays the table to the user.
+
+        Arguments:
+            data {[list]} -- [the list of available connections]
+        """
         for row in data:
             self.table.add_row(row)
         click.echo(self.table)
 
     def _is_connection_active(self, uuid):
+        """
+        Tests whether or not the given connection is active.
+        Arguments:
+            uuid {[string]} -- [the uuid of the connection to test]
+
+        Returns:
+            [bool] -- [whether the connection is active or not]
+        """
         active_conn_uuids = [conn['Uuid'] for conn in self.active_connections]
         return uuid in active_conn_uuids
 
     def _color_data(self, conn):
+        """
+        Colors the values of the given connection dictionary.
+
+        Arguments:
+            conn {[dict]} -- [the connection whose values are to be colored]
+        """
         for key, val in conn.items():
             conn[key] = colored(val, "green")
 
     def _list_connections_info(self):
+        """
+        Calls ListConnections available on the settings
+        d-bus interface provided by NetworkManager.
+        For each connection path, an connection interface is
+        created and the GetSettings method is called.
+        The 'connection' property is then accessed and assigned to
+        a dictionary, which is itself appended to the result list.
+
+        Returns:
+            [list] -- [dictionaries containing information
+            about the available connections.]
+        """
         connections = self.settings_iface.ListConnections()
         result = []
 

@@ -29,6 +29,9 @@ class Device(WyPy):
         self.details_table.align = 'l'
 
     def print_status(self):
+        """
+        Displays general device status information to the user.
+        """
         click.echo('Showing status ...')
         device_status = list(map(self._get_device_status, self.all_devices))  # noqa E501
         sorted_status = sorted(device_status, key=lambda k: (k['connection'], k['type']), reverse=True)  # noqa E501
@@ -40,6 +43,9 @@ class Device(WyPy):
         click.echo(self.status_table)
 
     def list_all(self):
+        """
+        Prints a table with detailed information for each known device.
+        """
         click.echo('Listing all devices ...')
         for device in self.all_devices:
             details = self._get_device_details(device)
@@ -49,6 +55,12 @@ class Device(WyPy):
             self.details_table.clear_rows()
 
     def print_details(self, ifname):
+        """
+        Prints a table with details information for the given device.
+
+        Arguments:
+            ifname {[string]} -- [the device to display the details for]
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -61,6 +73,13 @@ class Device(WyPy):
         click.echo(self.details_table)
 
     def update_ifname_connection(self, ifname):
+        """
+        Updates the given device's connection information.
+        This is a clone of the "nmcli device update/reapply" command.
+
+        Arguments:
+            ifname {string} -- [the device to perform the action on]
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -69,6 +88,12 @@ class Device(WyPy):
             self._update_connection(device_path, ifname)
 
     def disconnect(self, ifname):
+        """
+        Disconnects the given device.
+
+        Arguments:
+            ifname {string} -- the device to disconnect
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -77,6 +102,12 @@ class Device(WyPy):
             self._disconnect_device(device_path, ifname)
 
     def delete_iface(self, ifname):
+        """
+        Deletes the given device
+
+        Arguments:
+            ifname {string} -- the device to delete
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -85,6 +116,16 @@ class Device(WyPy):
             self._delete_iface(device_path, ifname)
 
     def manage(self, ifname, flag=True):
+        """
+        Sets the given device's Managed property
+        to either True of False.
+
+        Arguments:
+            ifname {string} -- [the device to manage / unmanage]
+
+        Keyword Arguments:
+            flag {bool} -- [manage flag] (default: {True})
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -99,6 +140,16 @@ class Device(WyPy):
             )
 
     def autoconnect(self, ifname, flag=True):
+        """
+        Sets the given device's Autoconnect property
+        to either True of False.
+
+        Arguments:
+            ifname {string} -- [the device to autoconnect]
+
+        Keyword Arguments:
+            flag {bool} -- [enable / disable auto connect] (default: {True})
+        """
         try:
             device_path = self._get_known_device_object_path(ifname)
         except ValueError as exc:
@@ -117,6 +168,17 @@ class Device(WyPy):
     # --------------- #
 
     def _get_known_device_object_path(self, ifname):
+        """
+        Returns the device's d-bus object path.
+        If the given device name is not known to the system,
+        the program will exit with an error message.
+
+        Arguments:
+            device_obj_path {string} -- the device's own dbus object path
+
+        Returns:
+            dbus.Interface -- dbus interface for the given device
+        """
         known_devices = list(map(self._get_device_status, self.all_devices))  # noqa E501
         self.known_device_names = list(map(lambda x: str(x['name']), known_devices))  # noqa E501
 
@@ -133,11 +195,28 @@ class Device(WyPy):
         return device_path
 
     def _get_device_dbus_interface(self, device_obj_path):
+        """
+        Creates and returns a dbus interface for the device.
+
+        Arguments:
+            device_obj_path {string} -- the device's own dbus object path
+
+        Returns:
+            dbus.Interface -- dbus interface for the given device
+        """
         device_obj = self.bus.get_object(NM_BUS_NAME, device_obj_path)
         device_iface = dbus.Interface(device_obj, NM_DEVICE_IFACE)
         return device_iface
 
     def _update_connection(self, device_path, ifname):
+        """
+        Reapplies the settings on the connection
+        associated with the given device.
+
+        Arguments:
+            device_path {string} -- the device's own dbus object path
+            ifname {string} -- the device's interface name
+        """
         device = self._get_device_dbus_interface(device_path)
         try:
             device.Reapply({}, 0, 0)
@@ -153,6 +232,15 @@ class Device(WyPy):
             click.echo(msg)
 
     def _disconnect_device(self, device_path, ifname):
+        """
+        Gets the device's dbus interface and
+        calls the Disconnect method on it.
+        If an error occurs, the program exits with an error message.
+
+        Arguments:
+            device_path {string} -- the device's own dbus object path
+            ifname {string} -- the device's name
+        """
         device = self._get_device_dbus_interface(device_path)
         try:
             device.Disconnect()
@@ -167,6 +255,15 @@ class Device(WyPy):
             click.echo(f'Device "{ifname}" was successfully disconnected')
 
     def _delete_iface(self, device_path, ifname):
+        """
+        Gets the device's dbus interface and
+        calls the Delete method on it.
+        If an error occurs, the program exits with an error message.
+
+        Arguments:
+            device_path {string} -- the device's own dbus object path
+            ifname {string} -- the device's name
+        """
         device = self._get_device_dbus_interface(device_path)
         try:
             device.Delete()
@@ -178,6 +275,16 @@ class Device(WyPy):
             click.echo(f"Successfully deleted {ifname}")
 
     def _get_device_status(self, obj_path):
+        """
+        Retrieve general status related information
+        about a device.
+
+        Arguments:
+            obj_path {string} -- the device's own d-bus object path
+
+        Returns:
+            dict -- the device's status information
+        """
         dev_props = self.get_all_properties(obj_path, NM_DEVICE_IFACE)
         self._stringify_dbus_values(dev_props)
 
@@ -197,6 +304,16 @@ class Device(WyPy):
         }
 
     def _create_row(self, device_details):
+        """
+        Maps over the values of `device_details` and
+        applies the correct color to each value.
+
+        Arguments:
+            device_details {dict} -- the device's *detailed* information (ipv4, dns ...)
+
+        Returns:
+            list -- colored values
+        """
         state = int(device_details['state'])
         values = device_details.values()
         row_color = self.get_device_state_row_color(state)
@@ -208,6 +325,16 @@ class Device(WyPy):
         return list(map(lambda val: colored(val, row_color), values))
 
     def _get_connection_name(self, connection_path):
+        """
+        Retrives the name of the given connection.
+        If an error occurs, the program exits with an erorr message.
+
+        Arguments:
+            connection_path {string} -- the connection's own d-bus object path
+
+        Returns:
+            string -- the connection's name
+        """
         try:
             props = self.get_all_properties(
                 connection_path,
@@ -225,6 +352,22 @@ class Device(WyPy):
         map(lambda val: str(val), _dict.values())
 
     def _get_device_details(self, device_obj, show_all=False):
+        """
+        Retrives detailed information about the given device.
+        By default, the program only returns the status information
+        along with an additional 'Mtu' property.
+        If the show_all flag is enabled, WyPy will gather even more
+        details.
+
+        Arguments:
+            device_obj {string} -- the device's own d-bus object path
+
+        Keyword Arguments:
+            show_all {bool} -- whether to show all details or not (default: {False})
+
+        Returns:
+            dict -- the device's details
+        """
         dev_props = self.get_all_properties(device_obj, NM_DEVICE_IFACE)
         self._stringify_dbus_values(dev_props)
         dev_status = self._get_device_status(device_obj)
@@ -256,10 +399,13 @@ class Device(WyPy):
 
     def _fill_details_table(self, data):
         """
-        1. Iterates over `data`'s items
-        2. Uppercases / colors the key in yellow
-        3. Passes the newly formatted key and its associated value to
-           PrettyTable.add_row()
+        Iterates over `data`'s items
+        Uppercases / colors the key in yellow
+        Passes the newly formatted key and its associated value to
+        PrettyTable.add_row()
+
+        Arguments:
+            data {dict} -- the device's properties
         """
         for k, v in data.items():
             k = format_table_key(k)

@@ -18,17 +18,23 @@ class Network(WyPy):
 
     def get_connectivity_state(self):
         """
-        Retrieve general connectivity information from dbus
+        Retrieve general connectivity information from dbus.
         """
         prop_name = 'Connectivity'
         status_code = self.get_object_property(
             proxy=self.proxy,
             prop_name=prop_name
         )
-        status_str = self.translate_status_code(DBUS_GENERAL_PROPS[prop_name], int(status_code))
+        prop = DBUS_GENERAL_PROPS[prop_name]
+        status_str = self.translate_status_code(prop, status_code)
         click.echo(f'Connectivity State: {status_str}')
 
     def turn_on(self):
+        """
+        Enable networking on NetworkManager.
+        A check is performed before hand.
+        WyPy will exit with an error message if networking is already enabled.
+        """
         networking_enabled = self._get_networking_status()
         if not networking_enabled:
             self._enable_networking()
@@ -36,22 +42,51 @@ class Network(WyPy):
             click.echo('Networking is already enabled. Skipping.')
 
     def turn_off(self):
+        """
+        Disable networking on NetworkManager.
+        A check is performed before hand.
+        WyPy will exit with an error message if networking is already disabled.
+        """
         networking_enabled = self._get_networking_status()
         if networking_enabled:
             self._disable_networking()
         else:
             click.echo('Networking is already disabled. Skipping.')
 
-    # private methods
+    #   ---------------
+    #
+    #   Private Methods
+    #
+    #   ---------------
+
     def _enable_networking(self):
+        """
+        Calls the `Enable` method available on the main
+        NetworkManager d-bus interface.
+
+        interface: org.freedesktop.NetworkManager
+        """
         self.iface.Enable(True)
 
     def _disable_networking(self):
+        """
+        Calls the `Disable` method available on the main
+        NetworkManager d-bus interface.
+
+        interface: org.freedesktop.NetworkManager
+        """
         self.iface.Enable(False)
 
     def _get_networking_status(self):
+        """
+        Retrieve the `NetworingEnabled` property on the main
+        NetworkManager d-bus Interface.
+
+        Returns:
+            [int] -- [the networking status code]
+        """
         status_code = self.get_object_property(
             proxy=self.proxy,
             prop_name='NetworkingEnabled'
         )
-        return status_code
+        return int(status_code)
