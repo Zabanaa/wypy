@@ -1,6 +1,4 @@
 import pytest
-from termcolor import colored
-from dbus.exceptions import DBusException
 from unittest.mock import call
 from wypy.utils.constants import NM_BUS_NAME, NM_DEVICE_IFACE
 
