@@ -60,7 +60,7 @@ class Connection(WyPy):
             sys.exit(f'Could not deactivate {conn}. Connection unknown or inactive.')  # noqa E501
         else:
             conn_to_deactivate = next(filter(lambda x: str(x[filter_key]) == conn, self.active_connections), None)  # noqa E501
-            self.nm_iface.DeactivateConnection(conn_to_deactivate['Path'])
+            self._deactivate_connection(conn_to_deactivate['Path'])
 
     def delete(self, conn):
         """
@@ -84,9 +84,7 @@ class Connection(WyPy):
             except TypeError:
                 sys.exit(f'Could not delete {conn}. Connection unknown or already deleted.')
 
-        _conn = self.settings_iface.GetConnectionByUuid(uuid)
-        conn_obj = self.bus.get_object(NM_BUS_NAME, _conn)
-        conn_obj.Delete(dbus_interface=NM_CONNECTION_IFACE)
+        self._delete_connection(uuid)
 
     def show_all(self):
         """
@@ -101,21 +99,6 @@ class Connection(WyPy):
             self.table.add_row(row)
 
         click.echo(self.table)
-
-    def _create_row(self, conn):
-
-        conn_info = {
-            'id': str(conn.get('id', '')),
-            'uuid': str(conn.get('uuid', '')),
-            'type': conn.get('type', ''),
-            'name': str(conn.get('interface-name', '--')),
-        }
-        values = conn_info.values()
-
-        if self._is_connection_active(conn_info['uuid']):
-            values = list(map(lambda val: colored(val, "green"), values))
-
-        return values
 
     def show_active(self):
         """
@@ -135,6 +118,45 @@ class Connection(WyPy):
     #   Private Methods
     #
     #   ---------------
+
+    def _delete_connection(self, uuid):
+        """
+        Gets the connection object to delete by uuid
+        Creates the associated interface
+        Calls the Delete method on that interface
+
+        Arguments:
+            uuid {string} -- the uuid of the connection to delete
+        """
+        _conn = self.settings_iface.GetConnectionByUuid(uuid)
+        conn_obj = self.bus.get_object(NM_BUS_NAME, _conn)
+        conn_iface = dbus.Interface(conn_obj, NM_CONNECTION_IFACE)
+        conn_iface.Delete()
+
+    def _deactivate_connection(self, conn_path):
+        """
+        Calls DeactivateConnection on the main d-bus
+        interface provided by NetworkManager.
+
+        Arguments:
+            conn_path {string} -- the connection's own d-bus object path
+        """
+        self.nm_iface.DeactivateConnection(conn_path)
+
+    def _create_row(self, conn):
+
+        conn_info = {
+            'id': str(conn.get('id', '')),
+            'uuid': str(conn.get('uuid', '')),
+            'type': conn.get('type', ''),
+            'name': str(conn.get('interface-name', '--')),
+        }
+        values = conn_info.values()
+
+        if self._is_connection_active(conn_info['uuid']):
+            values = list(map(lambda val: colored(val, "green"), values))
+
+        return values
 
     def _get_active_connections(self):
         """
