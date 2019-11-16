@@ -14,7 +14,7 @@ from wypy.utils.constants import VERSION
 @click.version_option(version=VERSION, message=f'WyPy - Version {VERSION}')
 def cli():
     """
-    wypy is command line NetworkManager utility.
+    wypy is a command line utility for NetworkManager.
     """
     pass
 
