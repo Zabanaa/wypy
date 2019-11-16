@@ -13,6 +13,11 @@ def flatten(d, parent_key='', sep='.'):
     return dict(items)
 
 
+def nm_is_installed():
+    from shutil import which
+    return which('NetworkManager') is not None
+
+
 def is_valid_uuid(_str):
     """
     Checks if _str is a uuidv4 string

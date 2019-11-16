@@ -1,4 +1,7 @@
 import click
+import sys
+from termcolor import colored
+from wypy.utils.helpers import nm_is_installed
 from wypy.device.commands import device as device_commands
 from wypy.general.commands import general as general_commands
 from wypy.networking.commands import network as network_commands
@@ -23,4 +26,11 @@ cli.add_command(conn_commands)
 cli.add_command(device_commands)
 
 if __name__ == "__main__":
-    cli()
+    is_nm_installed = nm_is_installed()
+    if is_nm_installed:
+        cli()
+    else:
+        msg = """
+        [Error]: NetworkManager must be installed on the system to use WyPy.
+        """.replace('  ', '')
+        sys.exit(colored(msg, "red"))
