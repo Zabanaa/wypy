@@ -25,8 +25,8 @@ def turn_off(network):
 
 @click.command('connectivity')
 @click.option(
-    '--check', 
-    is_flag=True, 
+    '--check',
+    is_flag=True,
     help='force WyPy to recheck connectivity state'
 )
 @click.pass_obj
@@ -36,8 +36,9 @@ def connectivity(network, check):
     If check is passed, WyPy will perform a check on NetworkManager
     """
     if check:
-        click.echo('Checking connectivity again ...')
-    network.get_connectivity_state()
+        network.check_connectivity()
+    else:
+        network.get_connectivity_state()
 
 
 network.add_command(turn_on)

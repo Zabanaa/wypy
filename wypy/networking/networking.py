@@ -15,19 +15,16 @@ class Network(WyPy):
         super().__init__()
         self.proxy = self.bus.get_object(NM_BUS_NAME, NM_OBJ_PATH)
         self.iface = dbus.Interface(self.proxy, NM_IFACE)
+        self.connectivity_prop_name = 'Connectivity'
 
     def get_connectivity_state(self):
         """
         Retrieve general connectivity information from dbus.
         """
-        prop_name = 'Connectivity'
-        status_code = self.get_object_property(
-            proxy=self.proxy,
-            prop_name=prop_name
-        )
-        prop = DBUS_GENERAL_PROPS[prop_name]
-        status_str = self.translate_status_code(prop, status_code)
-        click.echo(f'Connectivity State: {status_str}')
+        status_code = self._get_connectivity_status_code()
+        prop = DBUS_GENERAL_PROPS[self.connectivity_prop_name]
+        connectivity_state = self.translate_status_code(prop, status_code)
+        self._print_connectivity_state(connectivity_state)
 
     def turn_on(self):
         """
@@ -53,11 +50,54 @@ class Network(WyPy):
         else:
             click.echo('Networking is already disabled. Skipping.')
 
+    def check_connectivity(self):
+        click.echo('Performing connectivity check ...')
+        """
+        Forces NetworkManager to perform a connectivity check
+        """
+        status_code = self._check_connectivity_state()
+        prop = DBUS_GENERAL_PROPS[self.connectivity_prop_name]
+        connectivity_state = self.translate_status_code(prop, status_code)
+        self._print_connectivity_state(connectivity_state)
+
     #   ---------------
     #
     #   Private Methods
     #
     #   ---------------
+
+    def _get_connectivity_status_code(self):
+        """
+        Retrive the 'Connectivity' property available
+        on NetworkManager's main d-bus interface.
+
+        Returns:
+            int -- the current network connectivity status code
+        """
+        status_code = self.get_object_property(
+            proxy=self.proxy,
+            prop_name=self.connectivity_prop_name
+        )
+        return int(status_code)
+
+    def _print_connectivity_state(self, status):
+        """
+        Echo the current connectivity state to the user.
+
+        Arguments:
+            status {string} -- the current connectivity status
+        """
+        click.echo(f'Connectivity state: {status}')
+
+    def _check_connectivity_state(self):
+        """
+        Calls the CheckConnectivity method on the NetworkManager's
+        main d-bus Interface.
+        Returns:
+            int -- the current networking connectivity state
+        """
+        state = self.iface.CheckConnectivity()
+        return state
 
     def _enable_networking(self):
         """
