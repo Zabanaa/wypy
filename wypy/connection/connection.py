@@ -25,7 +25,8 @@ class Connection(WyPy):
         self.nm_iface = dbus.Interface(self.proxy, NM_IFACE)
         self.active_conns_prop = 'ActiveConnections'
         self.conn_props = ['Id', 'Uuid', 'Type', 'Devices']
-        self.table = PrettyTable(['NAME', 'UUID', 'TYPE', 'DEVICE', 'PATH'])
+        self.table = PrettyTable(['NAME', 'UUID', 'TYPE', 'DEVICE'])
+        self.table.sortby = 'TYPE'
         self.table.align = 'l'
         self.active_connections = []
         self.settings_obj = self.bus.get_object(NM_BUS_NAME, NM_SETTINGS_OBJ_PATH)  # noqa E501
@@ -48,7 +49,7 @@ class Connection(WyPy):
         Deactivates a connection.
 
         Arguments:
-            conn {[string]} -- [uuid / name of the connection to delete]
+            conn {string} -- uuid / name of the connection to delete
         """
         click.echo('Deactivating connection ...')
         self._get_active_connections()
@@ -94,22 +95,27 @@ class Connection(WyPy):
         click.echo('Showing all connections ...')
         self._get_active_connections()
         connections = self._list_connections_info()
+        rows = list(map(self._create_row, connections))
 
-        for conn in connections:
-            conn_data = {
-                'id': str(conn.get('id', '')),
-                'uuid': str(conn.get('uuid', '')),
-                'type': conn.get('type', ''),
-                'name': str(conn.get('interface-name', '--')),
-                'path': conn.get('path', '--')
-            }
-
-            if self._is_connection_active(conn_data['uuid']):
-                self._color_data(conn_data)
-
-            self.table.add_row(conn_data.values())
+        for row in rows:
+            self.table.add_row(row)
 
         click.echo(self.table)
+
+    def _create_row(self, conn):
+
+        conn_info = {
+            'id': str(conn.get('id', '')),
+            'uuid': str(conn.get('uuid', '')),
+            'type': conn.get('type', ''),
+            'name': str(conn.get('interface-name', '--')),
+        }
+        values = conn_info.values()
+
+        if self._is_connection_active(conn_info['uuid']):
+            values = list(map(lambda val: colored(val, "green"), values))
+
+        return values
 
     def show_active(self):
         """
@@ -226,7 +232,6 @@ class Connection(WyPy):
             conn_obj = self.bus.get_object(NM_BUS_NAME, conn)
             conn_iface = dbus.Interface(conn_obj,  NM_CONNECTION_IFACE)
             conn_info = conn_iface.GetSettings()['connection']
-            conn_info['path'] = conn
             result.append(conn_info)
 
         return result
