@@ -10,7 +10,7 @@ def connection(ctx):
 
 
 @click.command('down')
-@click.argument('id', type=str, required=True)
+@click.argument('name', type=str, required=True)
 @click.pass_obj
 def down(conn, name):
     """Deactivate a connection"""
