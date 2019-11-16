@@ -1,4 +1,6 @@
-# Wypy is a command line utility to manage network connections.
+# Wypy 
+
+WyPy is a command line utility to manage network connections.
 
 ## Pre-Requisites
 Before you can start using WyPy, you need to make sure `NetworkManager` is installed on your system.
@@ -17,20 +19,28 @@ sudo pacman -S network-manager
 
 **Instructions for other linux distros coming soon ...**
 
+## Installation 
 
-The _base_ list of features will include:
+```python
+pip install WyPy
+pipenv install WyPy
+```
 
-- Scanning the network for access points
-- turn the radio on
-- turn the radio off
-- connect to an access point
-- disconnect from an access point
-- check if an access point was saved
-- list access points
-- listing devices
+## List of features / commands coming in the next versions
 
-## Some litterature
-
-- https://www.freedesktop.org/wiki/IntroductionToDBus/
-- https://dbus.freedesktop.org/doc/dbus-tutorial.html
-- https://dbus.freedesktop.org/doc/dbus-python/tutorial.html
+- [ ] wypy connection up 
+- [ ] wypy connection get 
+- [ ] wypy connection modify
+- [ ] wypy connection edit
+- [ ] wypy connection clone
+- [ ] wypy connection load
+- [ ] wypy connection export
+- [ ] wypy connection import
+- [ ] wypy connection monitor
+- [ ] wypy connection add
+- [ ] wypy wwan enable
+- [ ] wypy wwan disable
+- [ ] wypy wifi hotspot
+- [ ] wypy device monitor
+- [ ] wypy device modify
+- [ ] wypy device connect
