@@ -63,6 +63,8 @@ pipenv install WyPy
     - [Disconnect a device](####Disconnect%20a%20device)
     - [Reapply connection settings for a device](####Reapply%20connection%20settings%20for%20a%20device)
 
+<!-- toc -->
+
 ### General
 -----------
 
