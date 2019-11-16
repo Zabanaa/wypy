@@ -5,6 +5,7 @@ from wypy.wypy import WyPy
 from wypy.utils.constants import (
     NM_BUS_NAME,
     NM_OBJ_PATH,
+    NM_IFACE,
     NM_DEVICE_IFACE,
     NM_ACTIVE_CONN_IFACE,
     IP4_CONFIG_IFACE
@@ -23,7 +24,11 @@ class Device(WyPy):
         self.status_table_keys = ['DEVICE', 'TYPE', 'STATE', 'CONNECTION']
         self.status_table = PrettyTable(self.status_table_keys)
         self.status_table.align = 'l'
-        self.all_devices = self.get_object_property(self.nm, 'AllDevices')
+        self.all_devices = self.get_object_property(
+            proxy=self.nm,
+            bus_name=NM_IFACE,
+            prop_name='AllDevices'
+        )
         self.known_device_names = []
         self.details_table = PrettyTable(['PROPERTY', 'VALUE'])
         self.details_table.align = 'l'
