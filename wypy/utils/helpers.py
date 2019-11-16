@@ -14,6 +14,12 @@ def flatten(d, parent_key='', sep='.'):
 
 
 def nm_is_installed():
+    """
+    Checks if NetworkManager is intalled on the user's system
+
+    Returns:
+        bool -- if NetworkManager is installed
+    """
     from shutil import which
     return which('NetworkManager') is not None
 
