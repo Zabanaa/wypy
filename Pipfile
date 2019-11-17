@@ -7,18 +7,15 @@ verify_ssl = true
 flake8 = "*"
 pytest = "*"
 autopep8 = "*"
+tox = "*"
 
 [packages]
 click = "*"
-colorama = "*"
 dbus-python = "*"
 termcolor = "*"
 pytest-mock = "*"
-python-dbusmock = "*"
-vext = "*"
-vext-gi = "*"
 prettytable = "*"
-autopep8 = "*"
+pipenv = "*"
 
 [requires]
 python_version = "3.7"
