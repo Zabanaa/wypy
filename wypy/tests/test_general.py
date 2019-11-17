@@ -37,6 +37,7 @@ def test_show_status(general, mocker):
 
     general.show_status()
 
+    assert len(echo_mock.call_args_list) == len(info) + 1
     mock_info.assert_called_once()
     mock_translate.assert_has_calls(calls, any_order=True)
 
