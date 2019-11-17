@@ -1,6 +1,22 @@
 tags*
 .vscode
-__pycache__/
 *.egg-info
-build/
-dist/
+
+#Pypi
+/bin
+/build
+/dist
+/include
+/lib
+/man
+.tox/
+__pycache__/
+
+# Do not wants
+*.py[c|o]
+*.egg-info
+*.swp
+.coverage
+.Python
+pip-selfcheck.json
+credentials.py
