@@ -82,7 +82,7 @@ class Connection(WyPy):
             try:
                 uuid = conn_to_delete['uuid']
             except TypeError:
-                sys.exit(f'Could not delete {conn}. Connection unknown or already deleted.')
+                sys.exit(f'Could not delete {conn}. Connection unknown or already deleted.')  # noqa E501
 
         self._delete_connection(uuid)
 
@@ -178,7 +178,7 @@ class Connection(WyPy):
                 if not isinstance(all_props[prop], dbus.Array)
             }
 
-            device_name, device_type = self._get_device_info(all_props) 
+            device_name, device_type = self._get_device_info(all_props)
             conn_props['Device'] = device_name
             conn_props['Type'] = self.translate_device_type(device_type)
             conn_props['Path'] = conn

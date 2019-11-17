@@ -64,7 +64,8 @@ class WiFi(WyPy):
                 - if so is it active ?
                     - if it's active activate it
             - if there is no matching connection
-            - add and activate one passing it the type, name, and password (as per the example on github)
+            - add and activate one passing it the type,
+            name, and password (as per the example on github)
         """
         pass
 
@@ -123,9 +124,9 @@ class WiFi(WyPy):
 
     def _get_wifi_status_code(self):
         """
-        Retrieves the current status code for 
+        Retrieves the current status code for
         wireless connectivity.
-        
+
         Returns:
             string -- wifi status code
         """
@@ -163,7 +164,7 @@ class WiFi(WyPy):
         else:
             color = "white"
 
-        return list(map(lambda val: colored(val, color), values)) 
+        return list(map(lambda val: colored(val, color), values))
 
     def _get_wireless_device_path(self):
         """
@@ -180,7 +181,7 @@ class WiFi(WyPy):
         wireless_devices = list(filter(self._is_device_wifi, zip(devices_paths, all_devices)))  # noqa E501
 
         try:
-            wifi_dev_path = wireless_devices[0] # extract the first real wifi device that's returned
+            wifi_dev_path = wireless_devices[0]  # extract the first real wifi device that's returned  # noqa E501
         except Exception:
             err_msg = '[Error]: No wireless device found'
             sys.exit(colored(err_msg, "red"))

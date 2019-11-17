@@ -314,7 +314,8 @@ class Device(WyPy):
         applies the correct color to each value.
 
         Arguments:
-            device_details {dict} -- the device's *detailed* information (ipv4, dns ...)
+            device_details {dict} -- the device's
+            *detailed* information (ipv4, dns ...)
 
         Returns:
             list -- colored values
@@ -368,7 +369,8 @@ class Device(WyPy):
             device_obj {string} -- the device's own d-bus object path
 
         Keyword Arguments:
-            show_all {bool} -- whether to show all details or not (default: {False})
+            show_all {bool} -- whether to
+            show all details or not (default: {False})
 
         Returns:
             dict -- the device's details

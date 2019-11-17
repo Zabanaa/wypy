@@ -72,4 +72,3 @@ class General(WyPy):
         ]
 
         return status_info
-
