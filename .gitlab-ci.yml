@@ -10,7 +10,7 @@ before_script:
   - apt-get update -y && apt-get install -y network-manager pkg-config build-essential libdbus-glib-1-dev libgirepository1.0-dev dbus
   - dbus-uuidgen > /var/lib/dbus/machine-id
   - dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
-  - service NetworkManager enable && service NetworkManager start
+  - service network-manager enable && service network-manager start
   - pip install twine pipenv
   - pipenv install --dev
 
