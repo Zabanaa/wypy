@@ -5,9 +5,6 @@ stages:
   - lint
   - deploy
 
-before_script:
-  - pip install twine pipenv
-
 run_tests:
   before_script:
     - mkdir -p /var/run/dbus
@@ -15,18 +12,23 @@ run_tests:
     - dbus-uuidgen > /var/lib/dbus/machine-id
     - dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
     - service network-manager start
+    - pip install pipenv
     - pipenv install --dev
   stage: tests
   script:
     - pipenv run pytest -v -s --disable-warnings
 
 lint_code:
+  before_script:
+    - pip install pipenv
   stage: lint
   script:
     - pipenv run flake8 --exclude tests
 
 deploy:
   stage: deploy
+  before_script:
+    - pip install twine
   variables:
     TWINE_USERNAME: $PYPI_USERNAME
     TWINE_PASSWORD: $PYPI_PASSWORD
