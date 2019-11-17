@@ -7,7 +7,7 @@ stages:
 
 before_script:
   - mkdir -p /var/run/dbus
-  - apt-get update -y && apt-get install -y pkg-config build-essential libdbus-glib-1-dev libgirepository1.0-dev dbus
+  - apt-get update -y && apt-get install -y network-manager pkg-config build-essential libdbus-glib-1-dev libgirepository1.0-dev dbus
   - dbus-uuidgen > /var/lib/dbus/machine-id
   - dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
   - pip install twine pipenv
