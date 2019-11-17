@@ -20,11 +20,10 @@ run_tests:
 
 lint_code:
   before_script:
-    - pip install pipenv
-    - pipenv install flake8
+    - pip install flake8
   stage: lint
   script:
-    - pipenv run flake8 --exclude tests
+    - flake8 --exclude tests
 
 deploy:
   stage: deploy
