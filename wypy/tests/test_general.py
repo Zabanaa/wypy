@@ -31,6 +31,7 @@ def test_show_status(general, mocker):
         for name, status in zip(prop_names, status_codes)
     ]
 
+    echo_mock = mocker.patch('click.echo')
     mock_info = mocker.patch.object(general, '_get_status_info', return_value=info)
     mock_translate = mocker.patch.object(general, 'translate_status_code')
 

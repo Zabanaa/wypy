@@ -8,7 +8,7 @@ def test_get_connectivity_state(network, mocker):
         - calls self.bus.get_object_property
         - calls click.echo with the correct string
     """
-    expected_msg = f'Connectivity State: { colored("full", "green") }'
+    expected_msg = f'Connectivity state: { colored("full", "green") }'
 
     get_prop_mock = mocker.patch.object(network, 'get_object_property', return_value=4)
     echo_mock = mocker.patch('click.echo')
