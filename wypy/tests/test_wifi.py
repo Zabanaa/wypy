@@ -295,3 +295,13 @@ def test_get_wireless_device_path(wifi, mocker):
     is_device_wifi.assert_has_calls(is_device_wifi_calls)
 
     assert result == '/dev/1'
+
+# TODO
+# connect 
+# connect not found
+
+# _get_connection_info
+# _activate_existing_connection
+# _generate_wireless_connection_info
+# _establish_wireless_connection
+# _connect_to_access_point

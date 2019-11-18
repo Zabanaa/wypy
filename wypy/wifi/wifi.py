@@ -2,8 +2,11 @@ from termcolor import colored
 from prettytable import PrettyTable
 from dbus.exceptions import DBusException
 from wypy.utils.constants import (
+    NM_CONNECTION_IFACE,
     NM_BUS_NAME,
     NM_OBJ_PATH,
+    NM_SETTINGS_IFACE,
+    NM_SETTINGS_OBJ_PATH,
     DBUS_GENERAL_PROPS,
     NM_IFACE,
     NM_DEVICE_IFACE,
@@ -11,10 +14,7 @@ from wypy.utils.constants import (
     NM_ACCESS_POINT_IFACE
 )
 from wypy.wypy import WyPy
-import sys
-import click
-import dbus
-import time
+import dbus, click, sys, time, uuid  # noqa E401
 
 
 class WiFi(WyPy):
@@ -29,16 +29,27 @@ class WiFi(WyPy):
         self.status_table.sortby = 'SIGNAL'
         self.status_table.left_padding_width = 0
         self.status_table.right_padding_width = 8
+        self.settings_obj = self.bus.get_object(
+            NM_BUS_NAME,
+            NM_SETTINGS_OBJ_PATH
+        )
+        self.settings_iface = dbus.Interface(
+            self.settings_obj,
+            NM_SETTINGS_IFACE
+        )
+        self.wifi_dev_path = self._get_wireless_device_path()
+        self.wifi_dev_obj = self.bus.get_object(
+            NM_BUS_NAME,
+            self.wifi_dev_path
+        )
+        self.wifi_iface = dbus.Interface(self.wifi_dev_obj, NM_WIRELESS_IFACE)
 
     def list_access_points(self):
         """
         Lists all visible access points.
         """
         click.echo("Scanning for available access points ...")
-        wifi_dev_path = self._get_wireless_device_path()
-        wifi_dev_obj = self.bus.get_object(NM_BUS_NAME, wifi_dev_path)
-        wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
-        access_points = self._get_all_access_points(wifi_iface)
+        access_points = self._get_all_access_points()
         rows = list(map(self._create_row, access_points))
 
         for row in rows:
@@ -51,23 +62,37 @@ class WiFi(WyPy):
         Rescans the network for ( potentially ) newly added access points.
         """
         click.echo('Performing rescan ...')
-        wifi_dev_path = self._get_wireless_device_path()
-        wifi_dev_obj = self.bus.get_object(NM_BUS_NAME, wifi_dev_path)
-        wifi_iface = dbus.Interface(wifi_dev_obj, NM_WIRELESS_IFACE)
         self._request_scan(wifi_iface)
         click.echo('Done !')
 
-    def connect(self, ap_name, password):
+    def connect(self):
         """
-            - get all connections
+            # - get all connections
             - is there a matching known connection with that name ?
                 - if so is it active ?
-                    - if it's active activate it
+                    - if it's not active activate it
             - if there is no matching connection
             - add and activate one passing it the type,
             name, and password (as per the example on github)
         """
-        pass
+        conns_paths = self._list_all_connections()
+        conns_info = list(map(self._get_connection_info, conns_paths))
+        conn_names = list(map(lambda conn: str(conn['id']), conns_info))
+
+        access_point_name = click.prompt('SSID name')
+        access_point_password = click.prompt('Password', hide_input=True)
+
+        if access_point_name in conn_names:
+            _filter = lambda conn: conn['id'] == access_point_name  # noqa E731
+            conn_to_activate = next(filter(_filter, conns_info))
+            conn_path = conn_to_activate['dbus_path']
+            active_conn_path = self._activate_existing_connection(conn_path)
+            click.echo(f'Connection to {access_point_name} successful ! (D-Bus path: {active_conn_path})')  # noqa E501
+        else:
+            self._connect_to_access_point(
+                access_point_name,
+                access_point_password
+            )
 
     def turn_on(self):
         """
@@ -99,6 +124,105 @@ class WiFi(WyPy):
         prop = DBUS_GENERAL_PROPS[self.wifi_prop]
         status = self.translate_status_code(prop, status_code)
         click.echo(f'WiFi is {status}')
+
+    def _connect_to_access_point(self, ap_name, ap_pwd):
+
+        all_access_points = self._get_all_access_points()
+
+        _filter = lambda ap: ap['ssid'] == ap_name  # noqa E731
+        ap_to_connect_to = next(filter(_filter, all_access_points), None)
+
+        if ap_to_connect_to is not None:
+            ap_path = ap_to_connect_to['dbus_path']
+            conn_info = self._generate_wireless_connection_info(
+                ap_name,
+                ap_pwd
+            )
+            new_conn_uuid = self._establish_connection(conn_info, ap_path)
+            click.echo(f'Connection to "{ap_name}" successfully established ({new_conn_uuid})')  # noqa E501
+        else:
+            msg = f'[Error]: Connect to {ap_name} impossible. No such access point.'  # noqa E501
+            sys.exit(colored(msg, "red"))
+
+    def _establish_connection(self, conn, ap_path):
+        nm = dbus.Interface(self.proxy, NM_IFACE)
+        try:
+            nm.AddAndActivateConnection(
+                conn,
+                self.wifi_dev_path,
+                ap_path
+            )
+        except DBusException as exc:
+            msg = exc.get_dbus_message()
+            click.echo(colored(msg, "red"))
+        else:
+            return conn['connection']['uuid']
+
+    def _generate_wireless_connection_info(self, ap_name, ap_pwd):
+        conn = dbus.Dictionary({
+            'type': '802-11-wireless',
+            'uuid': str(uuid.uuid4()),
+            'id': ap_name
+        })
+
+        settings_wifi = dbus.Dictionary({
+            'ssid': dbus.ByteArray(ap_name.encode('utf-8')),
+            'mode': 'infrastructure'
+        })
+
+        settings_wifi_security = dbus.Dictionary({
+            'key-mgmt': 'wpa-psk',
+            'auth-alg': 'open',
+            'psk': ap_pwd
+        })
+
+        settings_ipv4 = dbus.Dictionary({'method': 'auto'})
+        settings_ipv6 = dbus.Dictionary({'method': 'ignore'})
+
+        return dbus.Dictionary({
+            'connection': conn,
+            '802-11-wireless': settings_wifi,
+            '802-11-wireless-security': settings_wifi_security,
+            'ipv4': settings_ipv4,
+            'ipv6': settings_ipv6
+        })
+
+    def _activate_existing_connection(self, conn_path):
+        """
+        Activates an existing connection by calling the
+        ActivateConnection method available on the main NetworkManager
+        interface.
+        If the connection attempt fails, the program exits with
+        the error message returned by D-Bus.
+
+        Arguments:
+            conn_path {string} -- the connection's own d-bus path
+
+        Returns:
+            string -- the newly activated connection's object path
+        """
+        self.nm = dbus.Interface(self.proxy, NM_IFACE)
+        try:
+            active_conn = self.nm.ActivateConnection(
+                conn_path,
+                self.wifi_dev_path,
+                '/'
+            )
+        except DBusException as exc:
+            msg = exc.get_dbus_message()
+            sys.exit(msg)
+        else:
+            return active_conn
+
+    def _get_connection_info(self, conn_path):
+        conn_obj = self.bus.get_object(NM_BUS_NAME, conn_path)
+        conn_iface = dbus.Interface(conn_obj,  NM_CONNECTION_IFACE)
+        conn_info = conn_iface.GetSettings()['connection']
+        conn_info['dbus_path'] = conn_path
+        return conn_info
+
+    def _list_all_connections(self):
+        return self.settings_iface.ListConnections()
 
     def _enable_wifi(self):
         """
@@ -215,7 +339,7 @@ class WiFi(WyPy):
         real, device_type = device_info['Real'], device_info['DeviceType']
         return bool(real) and device_type == 2
 
-    def _get_all_access_points(self, wifi_iface):
+    def _get_all_access_points(self):
         """
         Gets information for all visible access points
         on the network.
@@ -229,15 +353,15 @@ class WiFi(WyPy):
         """
 
         try:
-            self._request_scan(wifi_iface)
+            self._request_scan()
         except SystemExit:
             time.sleep(4)
 
-        access_points_paths = self._list_ap_paths(wifi_iface)
+        access_points_paths = self._list_ap_paths()
         access_points = list(map(self._extract_ap_info, access_points_paths))
         return access_points
 
-    def _list_ap_paths(self, wifi_iface):
+    def _list_ap_paths(self):
         """
         Calls GetAllAccessPoints on the wireless d-bus
         interface provided by NetworkManager.
@@ -249,9 +373,9 @@ class WiFi(WyPy):
         Returns:
             list -- list of access points object paths
         """
-        return wifi_iface.GetAllAccessPoints()
+        return self.wifi_iface.GetAllAccessPoints()
 
-    def _request_scan(self, wifi_iface):
+    def _request_scan(self):
         """
         Calls RequestScan on the wireless d-bus interface
         provided by NetworkManager.
@@ -261,7 +385,7 @@ class WiFi(WyPy):
             to call RequestScan on
         """
         try:
-            wifi_iface.RequestScan({})
+            self.wifi_iface.RequestScan({})
         except DBusException as exc:
             msg = exc.get_dbus_message()
             err = "Scanning not allowed immediately following previous scan"
