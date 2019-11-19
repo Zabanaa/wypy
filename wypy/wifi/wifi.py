@@ -125,6 +125,12 @@ class WiFi(WyPy):
         status = self.translate_status_code(prop, status_code)
         click.echo(f'WiFi is {status}')
 
+    #   ---------------
+    #
+    #   Private Methods
+    #
+    #   ---------------
+
     def _connect_to_access_point(self, ap_name, ap_pwd):
 
         all_access_points = self._get_all_access_points()
@@ -141,7 +147,7 @@ class WiFi(WyPy):
             new_conn_uuid = self._establish_connection(conn_info, ap_path)
             click.echo(f'Connection to "{ap_name}" successfully established ({new_conn_uuid})')  # noqa E501
         else:
-            msg = f'[Error]: Connect to {ap_name} impossible. No such access point.'  # noqa E501
+            msg = f'[Error]: Connection to {ap_name} impossible. No such access point.'  # noqa E501
             sys.exit(colored(msg, "red"))
 
     def _establish_connection(self, conn, ap_path):
