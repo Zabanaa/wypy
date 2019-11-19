@@ -1,5 +1,4 @@
 import click
-import dbus
 import sys
 from termcolor import colored
 from wypy.utils.helpers import nm_is_installed

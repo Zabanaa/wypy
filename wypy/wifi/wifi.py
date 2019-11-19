@@ -2,7 +2,6 @@ from termcolor import colored
 from prettytable import PrettyTable
 from dbus.exceptions import DBusException
 from wypy.utils.constants import (
-    NM_ACTIVE_CONN_IFACE,
     NM_CONNECTION_IFACE,
     NM_BUS_NAME,
     NM_OBJ_PATH,
@@ -13,7 +12,6 @@ from wypy.utils.constants import (
     NM_DEVICE_IFACE,
     NM_WIRELESS_IFACE,
     NM_ACCESS_POINT_IFACE,
-    NM_CONNECTION_STATE_ACTIVATED
 )
 from wypy.wypy import WyPy
 import dbus, click, sys, time, uuid  # noqa E401
@@ -64,7 +62,7 @@ class WiFi(WyPy):
         Rescans the network for ( potentially ) newly added access points.
         """
         click.echo('Performing rescan ...')
-        self._request_scan(wifi_iface)
+        self._request_scan()
         click.echo('Done !')
 
     def connect(self):
