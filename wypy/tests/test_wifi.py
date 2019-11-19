@@ -1,4 +1,6 @@
 import pytest
+import dbus
+import uuid
 from termcolor import colored
 from unittest.mock import call
 from wypy.utils.constants import DBUS_GENERAL_PROPS, NM_DEVICE_IFACE
@@ -249,10 +251,10 @@ def test_get_all_access_points(wifi, mocker):
     dummy_iface = 'dummy_iface'
     dummy_ap_paths_calls = [call(path) for path in dummy_ap_paths]
 
-    result = wifi._get_all_access_points(dummy_iface)
+    result = wifi._get_all_access_points()
 
-    request_scan.assert_called_once_with(dummy_iface)
-    list_ap_paths.assert_called_once_with(dummy_iface)
+    request_scan.assert_called_once()
+    list_ap_paths.assert_called_once()
     extract_ap_info.assert_has_calls(dummy_ap_paths_calls)
     assert isinstance(result, list) == True
 
@@ -296,12 +298,174 @@ def test_get_wireless_device_path(wifi, mocker):
 
     assert result == '/dev/1'
 
-# TODO
-# connect 
-# connect not found
 
-# _get_connection_info
-# _activate_existing_connection
-# _generate_wireless_connection_info
-# _establish_wireless_connection
-# _connect_to_access_point
+def test_connect_to_wifi_existing_conn(wifi, mocker):
+    dummy_ap_name = 'MyAwesomeAPName'
+    dummy_active_conn_path = '/path/to/active/conn'
+    dummy_conn_paths = ['/conn/1', '/conn/2']
+
+    list_all_conns = mocker.patch.object(
+        wifi,
+        '_list_all_connections',
+        return_value=dummy_conn_paths
+    )
+
+    get_conn_info_mock = mocker.patch.object(
+        wifi,
+        '_get_connection_info',
+        return_value={'id': dummy_ap_name, 'dbus_path': '/path/to/conn/1'}
+    )
+
+    prompt_mock = mocker.patch(
+        'click.prompt',
+        return_value=dummy_ap_name
+    )
+
+    echo_mock = mocker.patch('click.echo')
+
+    activate_existing_connection_mock = mocker.patch.object(
+        wifi,
+        '_activate_existing_connection',
+        return_value=dummy_active_conn_path
+    )
+
+    wifi.connect()
+
+    success_msg = echo_mock.call_args[0][0]
+    list_all_conns.assert_called_once()
+    assert get_conn_info_mock.call_count == len(dummy_conn_paths)
+    assert prompt_mock.call_count == 2
+    activate_existing_connection_mock.assert_called_once_with('/path/to/conn/1')
+    assert dummy_active_conn_path and dummy_ap_name in success_msg
+
+
+# connect not found
+def test_connect_to_wifi_non_existant_conn(wifi, mocker):
+    dummy_ap_name_and_pwd = 'MyAwesomeAPNameAndPassword'
+    dummy_conn_paths = ['/conn/1', '/conn/2']
+
+    list_all_conns = mocker.patch.object(
+        wifi,
+        '_list_all_connections',
+        return_value=dummy_conn_paths
+    )
+
+    get_conn_info_mock = mocker.patch.object(
+        wifi,
+        '_get_connection_info',
+        return_value={'id': 'helloworld', 'dbus_path': '/path/to/conn/1'}
+    )
+
+    prompt_mock = mocker.patch(
+        'click.prompt',
+        return_value=dummy_ap_name_and_pwd
+    )
+
+    conn_to_ap_mock = mocker.patch.object(
+        wifi,
+        '_connect_to_access_point'
+    )
+
+    wifi.connect()
+
+    list_all_conns.assert_called_once()
+    assert get_conn_info_mock.call_count == len(dummy_conn_paths)
+    assert prompt_mock.call_count == 2
+    conn_to_ap_mock.assert_called_once_with(
+        dummy_ap_name_and_pwd,
+        dummy_ap_name_and_pwd
+    )
+
+
+def test_connect_to_ap_unknown(wifi, mocker):
+    dummy_ap_name = 'some_ap'
+    dummy_ap_pass = 'some_pass'
+    dummy_aps = [{'ssid': 'hello'}, {'ssid': 'world'}]
+    get_all_aps_mock = mocker.patch.object(
+        wifi,
+        '_get_all_access_points',
+        return_value=dummy_aps
+    )
+    expected_err = "[Error]: Connection to some_ap impossible. No such access point."
+    with pytest.raises(SystemExit) as exc:
+        wifi._connect_to_access_point(dummy_ap_name, dummy_ap_pass)
+
+    assert colored(expected_err, "red") == exc.value.args[0]
+    get_all_aps_mock.assert_called_once()
+
+
+def test_connect_to_ap(wifi, mocker):
+    wifi_conn_info = {'key': 'value'}
+    new_conn_uuid = 'new-conn-uuid-v4'
+    dummy_ap_name = 'some_ap'
+    dummy_ap_pass = 'some_pass'
+    dummy_ap_path = '/path/to/ap'
+    dummy_aps = [
+        {'ssid': dummy_ap_name, 'dbus_path': dummy_ap_path},
+        {'ssid': 'world', 'dbus_path': 'some_path_to_dbus'}
+    ]
+    get_all_aps_mock = mocker.patch.object(
+        wifi,
+        '_get_all_access_points',
+        return_value=dummy_aps
+    )
+    generate_wifi_info_mock = mocker.patch.object(
+        wifi,
+        '_generate_wireless_connection_info',
+        return_value=wifi_conn_info
+    )
+    establish_connection_mock = mocker.patch.object(
+        wifi,
+        '_establish_connection',
+        return_value=new_conn_uuid
+    )
+    echo_mock = mocker.patch('click.echo')
+    expected_msg = f'Connection to "{dummy_ap_name}" successfully established ({new_conn_uuid})'
+
+    wifi._connect_to_access_point(dummy_ap_name, dummy_ap_pass)
+
+    get_all_aps_mock.assert_called_once()
+    generate_wifi_info_mock.assert_called_once_with(dummy_ap_name, dummy_ap_pass)
+    establish_connection_mock.assert_called_once_with(wifi_conn_info, dummy_ap_path)
+
+    echo_msg = echo_mock.call_args[0][0]
+    assert expected_msg == echo_msg
+
+
+def test_generate_wireless_info(wifi):
+    dummy_ap = 'some_ap'
+    dummy_pw = 'some_pw'
+    info = wifi._generate_wireless_connection_info(
+        dummy_ap,
+        dummy_pw
+    )
+    expected_keys = [
+        'connection', '802-11-wireless',
+        '802-11-wireless-security', 'ipv4', 'ipv6'
+    ]
+    assert isinstance(info, dbus.Dictionary)
+    assert sorted(expected_keys) == sorted(info.keys())
+
+    ipv4 = info['ipv4']
+    ipv6 = info['ipv6']
+
+    assert 'method' in ipv4.keys()
+    assert 'method' in ipv6.keys()
+    assert ipv4['method'] == 'auto'
+    assert ipv6['method'] == 'ignore'
+
+    security = info['802-11-wireless-security']
+    assert sorted(['key-mgmt', 'auth-alg', 'psk']) == sorted(security.keys())
+    assert security['key-mgmt'] == 'wpa-psk'
+    assert security['auth-alg'] == 'open'
+    assert security['psk'] == dummy_pw
+
+    wifi = info['802-11-wireless']
+    assert sorted(['ssid', 'mode']) == sorted(wifi.keys())
+    assert wifi['ssid'] == dbus.ByteArray(dummy_ap.encode('utf-8'))
+    assert wifi['mode'] == 'infrastructure'
+
+    conn = info['connection']
+    assert sorted(['type', 'uuid', 'id']) == sorted(conn.keys())
+    assert conn['id'] == dummy_ap
+    assert conn['type'] == '802-11-wireless'
