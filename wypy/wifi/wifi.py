@@ -2,6 +2,7 @@ from termcolor import colored
 from prettytable import PrettyTable
 from dbus.exceptions import DBusException
 from wypy.utils.constants import (
+    NM_ACTIVE_CONN_IFACE,
     NM_CONNECTION_IFACE,
     NM_BUS_NAME,
     NM_OBJ_PATH,
@@ -11,7 +12,8 @@ from wypy.utils.constants import (
     NM_IFACE,
     NM_DEVICE_IFACE,
     NM_WIRELESS_IFACE,
-    NM_ACCESS_POINT_IFACE
+    NM_ACCESS_POINT_IFACE,
+    NM_CONNECTION_STATE_ACTIVATED
 )
 from wypy.wypy import WyPy
 import dbus, click, sys, time, uuid  # noqa E401
@@ -80,7 +82,7 @@ class WiFi(WyPy):
         conn_names = list(map(lambda conn: str(conn['id']), conns_info))
 
         access_point_name = click.prompt('SSID name')
-        access_point_password = click.prompt('Password', hide_input=True)
+        access_point_password = click.prompt('Password')
 
         if access_point_name in conn_names:
             _filter = lambda conn: conn['id'] == access_point_name  # noqa E731
@@ -132,6 +134,14 @@ class WiFi(WyPy):
     #   ---------------
 
     def _connect_to_access_point(self, ap_name, ap_pwd):
+        """
+        Establishes a wireless connection to the
+        provided access point.
+
+        Arguments:
+            ap_name {string} -- the access point's name (SSID)
+            ap_pwd {string} -- the access point's password
+        """
 
         all_access_points = self._get_all_access_points()
 
@@ -144,25 +154,48 @@ class WiFi(WyPy):
                 ap_name,
                 ap_pwd
             )
-            new_conn_uuid = self._establish_connection(conn_info, ap_path)
-            click.echo(f'Connection to "{ap_name}" successfully established ({new_conn_uuid})')  # noqa E501
+            click.echo('Establishing connection. Please hold tight ...')
+            self._establish_connection(conn_info, ap_path)
         else:
             msg = f'[Error]: Connection to {ap_name} impossible. No such access point.'  # noqa E501
             sys.exit(colored(msg, "red"))
 
+    def _handle_wifi_state_change(self, new_state, old_state, reason):
+        if new_state == 100:
+            msg = f'Connection to {self.ap_name} ({self.ap_uuid}) successful !'
+            self._exit_loop(msg)
+
+        if new_state == 120:
+            if reason == 7:
+                msg = '[Error]. Could not connect. Invalid Password.'
+            else:
+                msg = f'[Error] Could not connect. Reason number: {reason}'
+
+            self._exit_loop(msg, error=True)
+
     def _establish_connection(self, conn, ap_path):
+        from gi.repository import GObject  # noqa F401
+
         nm = dbus.Interface(self.proxy, NM_IFACE)
+        settings, active_conn = nm.AddAndActivateConnection(
+            conn,
+            self.wifi_dev_path,
+            ap_path
+        )
         try:
-            nm.AddAndActivateConnection(
-                conn,
-                self.wifi_dev_path,
-                ap_path
+            self.wifi_dev_obj.connect_to_signal(
+                'StateChanged',
+                self._handle_wifi_state_change,
+                NM_DEVICE_IFACE,
             )
+            self.ap_name = conn['connection']['id']
+            self.ap_uuid = conn['connection']['uuid']
         except DBusException as exc:
             msg = exc.get_dbus_message()
-            click.echo(colored(msg, "red"))
-        else:
-            return conn['connection']['uuid']
+            sys.exit(msg)
+
+        self.loop = GObject.MainLoop()
+        self.loop.run()
 
     def _generate_wireless_connection_info(self, ap_name, ap_pwd):
         conn = dbus.Dictionary({
@@ -505,3 +538,18 @@ class WiFi(WyPy):
         """
         bitrate = int(bitrate) // 1000
         return f"{bitrate} Mbit/s"
+
+    def _exit_loop(self, msg, error=False):
+        """
+        Exit the main D-bus loop
+
+        Arguments:
+            msg {string} -- the message to display the user
+
+        Keyword Arguments:
+            error {bool} -- if the message is an error (default: {False})
+        """
+        if error:
+            msg = colored(msg, 'red')
+        click.echo(msg)
+        self.loop.quit()

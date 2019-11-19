@@ -20,6 +20,8 @@ NM_WIRELESS_IFACE = 'org.freedesktop.NetworkManager.Device.Wireless'
 
 NM_ACCESS_POINT_IFACE = 'org.freedesktop.NetworkManager.AccessPoint'
 
+NM_CONNECTION_STATE_ACTIVATED = 2
+
 DBUS_GENERAL_PROPS = {
     'Connectivity': 'CONNECTIVITY',
     'State': 'STATE',

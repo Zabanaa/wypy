@@ -1,4 +1,5 @@
 import click
+import dbus
 import sys
 from termcolor import colored
 from wypy.utils.helpers import nm_is_installed
@@ -28,6 +29,8 @@ cli.add_command(device_commands)
 if __name__ == "__main__":
     is_nm_installed = nm_is_installed()
     if is_nm_installed:
+        from dbus.mainloop.glib import DBusGMainLoop
+        DBusGMainLoop(set_as_default=True)
         cli()
     else:
         msg = """
