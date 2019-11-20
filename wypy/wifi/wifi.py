@@ -48,6 +48,7 @@ class WiFi(WyPy):
                 self.wifi_dev_path
             )
             self.wifi_iface = dbus.Interface(self.wifi_dev_obj, NM_WIRELESS_IFACE)
+        finally:
             self.loop = GObject.MainLoop()
 
     def list_access_points(self):
