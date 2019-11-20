@@ -1,11 +1,12 @@
 import setuptools
+from wypy.utils.constants import VERSION
 
 with open("README.md") as f:
     long_description = f.read()
 
 setuptools.setup(
     name='wypy',
-    version='1.0.0',
+    version=VERSION,
     description='A NetworkManager CLI utility.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -18,6 +19,7 @@ setuptools.setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Topic :: Security'
