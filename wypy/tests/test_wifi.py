@@ -1,6 +1,5 @@
 import pytest
 import dbus
-import uuid
 from termcolor import colored
 from unittest.mock import call
 from wypy.utils.constants import DBUS_GENERAL_PROPS, NM_DEVICE_IFACE
@@ -419,17 +418,12 @@ def test_connect_to_ap(wifi, mocker):
         '_establish_connection',
         return_value=new_conn_uuid
     )
-    echo_mock = mocker.patch('click.echo')
-    expected_msg = f'Connection to "{dummy_ap_name}" successfully established ({new_conn_uuid})'
 
     wifi._connect_to_access_point(dummy_ap_name, dummy_ap_pass)
 
     get_all_aps_mock.assert_called_once()
     generate_wifi_info_mock.assert_called_once_with(dummy_ap_name, dummy_ap_pass)
     establish_connection_mock.assert_called_once_with(wifi_conn_info, dummy_ap_path)
-
-    echo_msg = echo_mock.call_args[0][0]
-    assert expected_msg == echo_msg
 
 
 def test_generate_wireless_info(wifi):
