@@ -463,3 +463,94 @@ def test_generate_wireless_info(wifi):
     assert sorted(['type', 'uuid', 'id']) == sorted(conn.keys())
     assert conn['id'] == dummy_ap
     assert conn['type'] == '802-11-wireless'
+
+
+def test_exit_loop(wifi, mocker):
+    quit_loop_mock = mocker.patch.object(wifi.loop, 'quit')
+    echo_mock = mocker.patch('click.echo')
+
+    msg = "Done and dusted !"
+
+    wifi._exit_loop(msg)
+
+    echo_mock.assert_called_once_with(msg)
+    quit_loop_mock.assert_called_once()
+
+
+def test_exit_loop_error(wifi, mocker):
+    quit_loop_mock = mocker.patch.object(wifi.loop, 'quit')
+    echo_mock = mocker.patch('click.echo')
+
+    msg = "Error !!!!"
+
+    wifi._exit_loop(msg, error=True)
+
+    echo_mock.assert_called_once_with(colored(msg, 'red'))
+    quit_loop_mock.assert_called_once()
+
+
+def test_handle_wifi_state_change(wifi, mocker):
+    exit_loop_mock = mocker.patch.object(
+        wifi,
+        '_exit_loop'
+    )
+    delete_active_conn = mocker.patch.object(
+        wifi,
+        '_delete_failed_active_connection'
+    )
+
+    new_state = 100
+    old_state = 30
+    reason = 0
+    wifi.ap_name = "Some Ap"
+    wifi.ap_uuid = "Some UUID"
+
+    msg = f'Connection to {wifi.ap_name} ({wifi.ap_uuid}) successful !'
+
+    wifi._handle_wifi_state_change(new_state, old_state, reason)
+
+    exit_loop_mock.assert_called_once_with(msg)
+
+
+def test_handle_wifi_state_change_invalid_pwd(wifi, mocker):
+    exit_loop_mock = mocker.patch.object(
+        wifi,
+        '_exit_loop'
+    )
+    delete_active_conn = mocker.patch.object(
+        wifi,
+        '_delete_failed_active_connection'
+    )
+
+    new_state = 120
+    old_state = 70
+    reason = 7
+
+    wifi._handle_wifi_state_change(new_state, old_state, reason)
+
+    msg = '[Error]. Could not connect. Invalid Password.'
+
+    delete_active_conn.assert_called_once()
+    exit_loop_mock.assert_called_once_with(msg, error=True)
+
+
+def test_handle_wifi_state_change_error(wifi, mocker):
+    exit_loop_mock = mocker.patch.object(
+        wifi,
+        '_exit_loop'
+    )
+    delete_active_conn = mocker.patch.object(
+        wifi,
+        '_delete_failed_active_connection'
+    )
+
+    new_state = 120
+    old_state = 70
+    reason = 9
+
+    wifi._handle_wifi_state_change(new_state, old_state, reason)
+
+    msg = f'[Error] Could not connect. Reason number: {reason}'
+
+    delete_active_conn.assert_called_once()
+    exit_loop_mock.assert_called_once_with(msg, error=True)
