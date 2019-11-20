@@ -16,7 +16,6 @@ run_tests:
     - pipenv install --dev
   stage: tests
   script:
-    - pipenv install vext vext.gi --skip-lock
     - pipenv run pytest -v -s --disable-warnings
 
 lint_code:
