@@ -1,3 +1,4 @@
+from gi.repository import GObject  # noqa F401
 from termcolor import colored
 from prettytable import PrettyTable
 from dbus.exceptions import DBusException
@@ -43,6 +44,7 @@ class WiFi(WyPy):
             self.wifi_dev_path
         )
         self.wifi_iface = dbus.Interface(self.wifi_dev_obj, NM_WIRELESS_IFACE)
+        self.loop = GObject.MainLoop()
 
     def list_access_points(self):
         """
@@ -211,7 +213,6 @@ class WiFi(WyPy):
             conn {dict} -- the connection's information
             ap_path {string} -- the access point's own d-bus object path
         """
-        from gi.repository import GObject  # noqa F401
 
         nm = dbus.Interface(self.proxy, NM_IFACE)
         settings, active_conn = nm.AddAndActivateConnection(
@@ -231,7 +232,6 @@ class WiFi(WyPy):
             msg = exc.get_dbus_message()
             sys.exit(msg)
 
-        self.loop = GObject.MainLoop()
         self.loop.run()
 
     def _generate_wireless_connection_info(self, ap_name, ap_pwd):
