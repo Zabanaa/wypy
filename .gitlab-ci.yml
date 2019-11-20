@@ -8,7 +8,7 @@ stages:
 run_tests:
   before_script:
     - mkdir -p /var/run/dbus
-    - apt-get update -y && apt-get install -y network-manager pkg-config build-essential libdbus-glib-1-dev libgirepository1.0-dev dbus
+    - apt-get update -y && apt-get install -y python3-gi network-manager pkg-config build-essential libdbus-glib-1-dev libgirepository1.0-dev dbus
     - dbus-uuidgen > /var/lib/dbus/machine-id
     - dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
     - service network-manager start
@@ -16,6 +16,7 @@ run_tests:
     - pipenv install --dev
   stage: tests
   script:
+    - pipenv install vext vext.gi
     - pipenv run pytest -v -s --disable-warnings
 
 lint_code:
