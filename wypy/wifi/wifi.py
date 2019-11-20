@@ -40,14 +40,17 @@ class WiFi(WyPy):
         )
         try:
             self.wifi_dev_path = self._get_wireless_device_path()
-        except:
+        except Exception:
             pass
         else:
             self.wifi_dev_obj = self.bus.get_object(
                 NM_BUS_NAME,
                 self.wifi_dev_path
             )
-            self.wifi_iface = dbus.Interface(self.wifi_dev_obj, NM_WIRELESS_IFACE)
+            self.wifi_iface = dbus.Interface(
+                self.wifi_dev_obj,
+                NM_WIRELESS_IFACE
+            )
         finally:
             self.loop = GObject.MainLoop()
 
