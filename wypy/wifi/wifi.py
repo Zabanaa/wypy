@@ -159,6 +159,17 @@ class WiFi(WyPy):
             sys.exit(colored(msg, "red"))
 
     def _handle_wifi_state_change(self, new_state, old_state, reason):
+        """
+        This is the StateChanged signal handler for the Device
+        D-Bus interface.
+        It processes the new state, and the potential
+        reason in case of failure.
+
+        Arguments:
+            new_state {int} -- the device's new state
+            old_state {int} -- the device's old state
+            reason {int} -- the reason why the device failed to connect.
+        """
         if new_state == 100:
             msg = f'Connection to {self.ap_name} ({self.ap_uuid}) successful !'
             self._exit_loop(msg)
@@ -172,6 +183,20 @@ class WiFi(WyPy):
             self._exit_loop(msg, error=True)
 
     def _establish_connection(self, conn, ap_path):
+        """
+        Adds and activate the connection using the provided info and
+        the access point's path.
+
+        Subscribes to the StateChanged signal on the wireless
+        device's proxy.
+
+        Runs the GObject main loop until the new state is
+        processed by the handler method.
+
+        Arguments:
+            conn {dict} -- the connection's information
+            ap_path {string} -- the access point's own d-bus object path
+        """
         from gi.repository import GObject  # noqa F401
 
         nm = dbus.Interface(self.proxy, NM_IFACE)
@@ -196,6 +221,17 @@ class WiFi(WyPy):
         self.loop.run()
 
     def _generate_wireless_connection_info(self, ap_name, ap_pwd):
+        """
+        Produces a dictionary containing all the necessary information
+        NetworkManager requires to establish a WPA wireless connection.
+
+        Arguments:
+            ap_name {string} -- the name of the access point to connect to
+            ap_pwd {string} -- the password for the access point
+
+        Returns:
+            dict -- the connection info
+        """
         conn = dbus.Dictionary({
             'type': '802-11-wireless',
             'uuid': str(uuid.uuid4()),
@@ -539,7 +575,8 @@ class WiFi(WyPy):
 
     def _exit_loop(self, msg, error=False):
         """
-        Exit the main D-bus loop
+        Exit the main D-bus loop.
+        If the error flag is set to true, the msg is colored red.
 
         Arguments:
             msg {string} -- the message to display the user
