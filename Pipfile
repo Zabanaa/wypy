@@ -16,6 +16,9 @@ termcolor = "*"
 pytest-mock = "*"
 prettytable = "*"
 pipenv = "*"
+gobject = "*"
+pygobject = "*"
+wypy = {editable = true,path = "."}
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"

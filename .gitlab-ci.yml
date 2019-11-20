@@ -14,6 +14,7 @@ run_tests:
     - service network-manager start
     - pip install pipenv
     - pipenv install --dev
+    - pipenv run pip install --no-binary gobject PyGObject
   stage: tests
   script:
     - pipenv run pytest -v -s --disable-warnings
