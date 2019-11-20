@@ -179,8 +179,22 @@ class WiFi(WyPy):
                 msg = '[Error]. Could not connect. Invalid Password.'
             else:
                 msg = f'[Error] Could not connect. Reason number: {reason}'
-
+            self._delete_failed_active_connection()
             self._exit_loop(msg, error=True)
+
+    def _delete_failed_active_connection(self):
+        """
+        Deletes the active connection if the attempt at connecting
+        failed.
+        This is done to prevent WyPy to accidentally connect the user to
+        an inactive access point.
+        """
+        conn_path = self.settings_iface.GetConnectionByUuid(
+            self.ap_uuid
+        )
+        conn_obj = self.bus.get_object(NM_BUS_NAME, conn_path)
+        conn_iface = dbus.Interface(conn_obj, NM_CONNECTION_IFACE)
+        conn_iface.Delete()
 
     def _establish_connection(self, conn, ap_path):
         """
