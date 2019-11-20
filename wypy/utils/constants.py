@@ -1,4 +1,4 @@
-VERSION = '0.1.0'
+VERSION = '1.0.0'
 NM_BUS_NAME = 'org.freedesktop.NetworkManager'
 
 NM_OBJ_PATH = '/org/freedesktop/NetworkManager'
